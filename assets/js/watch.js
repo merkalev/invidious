@@ -44,9 +44,9 @@ function next_video() {
 
 function continue_autoplay(event) {
     if (event.target.checked) {
-        player.on('ended', next_video);
+        player.addEventListener('ended', next_video);
     } else {
-        player.off('ended');
+        player.removeEventListener('ended', next_video);
     }
 }
 
@@ -80,7 +80,7 @@ function get_playlist(plid) {
             var nextVideo = document.getElementById(response.nextVideo);
             nextVideo.parentNode.parentNode.scrollTop = nextVideo.offsetTop;
 
-            player.on('ended', function () {
+            player.addEventListener('ended', function () {
                 var url = new URL('https://example.com/watch?v=' + response.nextVideo);
 
                 url.searchParams.set('list', plid);
@@ -161,7 +161,7 @@ function get_reddit_comments() {
 }
 
 if (video_data.play_next) {
-    player.on('ended', function () {
+    player.addEventListener('ended', function () {
         var url = new URL('https://example.com/watch?v=' + video_data.next_video);
 
         if (video_data.params.autoplay || video_data.params.continue_autoplay)
@@ -197,4 +197,7 @@ addEventListener('load', function (e) {
     }
 });
 
-document.getElementById("try-reddit-comments-link").onclick = swap_comments;
+var try_reddit_btn = document.getElementById("try-reddit-comments-link");
+if (try_reddit_btn) {
+    try_reddit_btn.onclick = swap_comments;
+}

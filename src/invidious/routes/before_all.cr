@@ -49,6 +49,7 @@ module Invidious::Routes::BeforeAll
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data:",
       "font-src 'self' data:",
+      "worker-src 'self' blob:",
       "connect-src 'self' " + COMPANION_CSP.companion_urls,
       "manifest-src 'self'",
       "media-src 'self' blob: " + COMPANION_CSP.companion_urls,

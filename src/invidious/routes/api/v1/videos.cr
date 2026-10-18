@@ -222,7 +222,7 @@ module Invidious::Routes::API::V1::Videos
     template_path = sb.proxied_url.path
 
     # Initialize cue timing variables
-    # NOTE: videojs-vtt-thumbnails gets lost when the cue times don't overlap
+    # NOTE: consumers lose track when the cue times don't overlap
     # (i.e: if cue[n] end time is 1:06:25.000, cue[n+1] start time should be 1:06:25.000)
     time_delta = sb.interval.milliseconds
     start_time = 0.milliseconds
@@ -248,9 +248,9 @@ module Invidious::Routes::API::V1::Videos
       end
     end
 
-    # videojs-vtt-thumbnails is not compliant to the VTT specification, it
-    # doesn't unescape the HTML entities, so we have to do it here:
-    # TODO: remove this when we migrate to VideoJS 8
+    # Consumers of this VTT may not unescape the HTML entities, so we
+    # have to do it here:
+    # NOTE: the storyboard track assets are served as plain VTT now.
     return HTML.unescape(vtt_file)
   end
 

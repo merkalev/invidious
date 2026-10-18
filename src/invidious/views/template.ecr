@@ -24,87 +24,107 @@
     <link rel="stylesheet" href="/css/default.css?v=<%= ASSET_COMMIT %>">
     <link rel="stylesheet" href="/css/carousel.css?v=<%= ASSET_COMMIT %>">
     <script src="/js/_helpers.js?v=<%= ASSET_COMMIT %>"></script>
+    <script src="/js/handlers.js?v=<%= ASSET_COMMIT %>"></script>
 </head>
 
 <body class="<%= dark_mode.blank? ? "no" : dark_mode %>-theme">
     <span style="display:none" id="dark_mode_pref"><%= dark_mode %></span>
-    <div class="pure-g">
-        <div class="pure-u-1 pure-u-xl-20-24" id="contents">
-            <div class="pure-g navbar h-box">
-                <% if navbar_search %>
-                    <div class="pure-u-1 pure-u-md-4-24">
-                        <a href="/" class="index-link pure-menu-heading">Invidious</a>
-                    </div>
-                    <div class="pure-u-1 pure-u-md-12-24 searchbar">
-                        <% autofocus = false %><%= rendered "components/search_box" %>
-                    </div>
-                <% end %>
 
-                <div class="pure-u-1 pure-u-md-8-24 user-field">
-                    <% if env.get? "user" %>
-                        <div class="pure-u-1-4">
-                            <a id="toggle_theme" href="/toggle_theme?referer=<%= env.get?("current_page") %>" class="pure-menu-heading" title="<%= I18n.translate(locale, "toggle_theme") %>">
-                                <% if dark_mode == "dark" %>
-                                    <i class="icon ion-ios-sunny"></i>
-                                <% else %>
-                                    <i class="icon ion-ios-moon"></i>
-                                <% end %>
-                            </a>
-                        </div>
-                        <div class="pure-u-1-4">
-                            <a id="notification_ticker" title="<%= I18n.translate(locale, "Subscriptions") %>" href="/feed/subscriptions" class="pure-menu-heading">
-                                <% notification_count = env.get("user").as(Invidious::User).notifications.size %>
-                                <% if CONFIG.enable_user_notifications && notification_count > 0 %>
-                                    <span id="notification_count"><%= notification_count %></span> <i class="icon ion-ios-notifications"></i>
-                                <% else %>
-                                    <i class="icon ion-ios-notifications-outline"></i>
-                                <% end %>
-                            </a>
-                        </div>
-                        <div class="pure-u-1-4">
-                            <a title="<%= I18n.translate(locale, "Preferences") %>" href="/preferences?referer=<%= env.get?("current_page") %>" class="pure-menu-heading">
-                                <i class="icon ion-ios-cog"></i>
-                            </a>
-                        </div>
-                        <% if env.get("preferences").as(Preferences).show_nick %>
-                            <div class="pure-u-1-4" style="overflow: hidden; white-space: nowrap;">
-                                <span id="user_name"><%= HTML.escape(env.get("user").as(Invidious::User).email) %></span>
-                            </div>
-                        <% end %>
-                        <div class="pure-u-1-4">
-                            <form action="/signout?referer=<%= env.get?("current_page") %>" method="post">
-                                <input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try &.as(String) || "") %>">
-                                <a class="pure-menu-heading" href="#">
-                                    <input style="all:unset" type="submit" value="<%= I18n.translate(locale, "Log out") %>">
-                                </a>
-                            </form>
-                        </div>
+    <header id="navbar">
+        <div class="nav-left">
+            <button id="sidebar-toggle" class="nav-icon" title="Menu">
+                <i class="icon ion-ios-menu"></i>
+            </button>
+            <a href="/" class="index-link">
+                <img class="site-logo" src="/invidious-colored-vector.svg" alt="Invidious logo">
+                Invidious
+            </a>
+        </div>
+
+        <% if navbar_search %>
+            <div class="navbar-search searchbar">
+                <% autofocus = false %><%= rendered "components/search_box" %>
+            </div>
+        <% else %>
+            <div class="navbar-search"></div>
+        <% end %>
+
+        <div class="user-field">
+            <% if env.get? "user" %>
+                <a id="toggle_theme" href="/toggle_theme?referer=<%= env.get?("current_page") %>" class="pure-menu-heading" title="<%= I18n.translate(locale, "toggle_theme") %>">
+                    <% if dark_mode == "dark" %>
+                        <i class="icon ion-ios-sunny"></i>
                     <% else %>
-                        <div class="pure-u-1-3">
-                            <a id="toggle_theme" href="/toggle_theme?referer=<%= env.get?("current_page") %>" class="pure-menu-heading" title="<%= I18n.translate(locale, "toggle_theme") %>">
-                                <% if dark_mode == "dark" %>
-                                    <i class="icon ion-ios-sunny"></i>
-                                <% else %>
-                                    <i class="icon ion-ios-moon"></i>
-                                <% end %>
-                            </a>
-                        </div>
-                        <div class="pure-u-1-3">
-                            <a title="<%= I18n.translate(locale, "Preferences") %>" href="/preferences?referer=<%= env.get?("current_page") %>" class="pure-menu-heading">
-                                <i class="icon ion-ios-cog"></i>
-                            </a>
-                        </div>
-                        <% if CONFIG.login_enabled %>
-                            <div class="pure-u-1-3">
-                                <a href="/login?referer=<%= env.get?("current_page") %>" class="pure-menu-heading">
-                                    <%= I18n.translate(locale, "Log in") %>
-                                </a>
-                            </div>
-                        <% end %>
+                        <i class="icon ion-ios-moon"></i>
                     <% end %>
-                </div>
+                </a>
+                <a id="notification_ticker" title="<%= I18n.translate(locale, "Subscriptions") %>" href="/feed/subscriptions" class="pure-menu-heading">
+                    <% notification_count = env.get("user").as(Invidious::User).notifications.size %>
+                    <% if CONFIG.enable_user_notifications && notification_count > 0 %>
+                        <span id="notification_count" class="notification-count-badge"><%= notification_count %></span> <i class="icon ion-ios-notifications"></i>
+                    <% else %>
+                        <i class="icon ion-ios-notifications-outline"></i>
+                    <% end %>
+                </a>
+                <a title="<%= I18n.translate(locale, "Preferences") %>" href="/preferences?referer=<%= env.get?("current_page") %>" class="pure-menu-heading">
+                    <i class="icon ion-ios-cog"></i>
+                </a>
+                <% if env.get("preferences").as(Preferences).show_nick %>
+                    <span id="user_name"><%= HTML.escape(env.get("user").as(Invidious::User).email) %></span>
+                <% end %>
+                <form action="/signout?referer=<%= env.get?("current_page") %>" method="post">
+                    <input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try &.as(String) || "") %>">
+                    <button type="submit" class="pure-menu-heading nav-pill-btn">
+                        <%= I18n.translate(locale, "Log out") %>
+                    </button>
+                </form>
+            <% else %>
+                <a id="toggle_theme" href="/toggle_theme?referer=<%= env.get?("current_page") %>" class="pure-menu-heading" title="<%= I18n.translate(locale, "toggle_theme") %>">
+                    <% if dark_mode == "dark" %>
+                        <i class="icon ion-ios-sunny"></i>
+                    <% else %>
+                        <i class="icon ion-ios-moon"></i>
+                    <% end %>
+                </a>
+                <a title="<%= I18n.translate(locale, "Preferences") %>" href="/preferences?referer=<%= env.get?("current_page") %>" class="pure-menu-heading">
+                    <i class="icon ion-ios-cog"></i>
+                </a>
+                <% if CONFIG.login_enabled %>
+                    <a href="/login?referer=<%= env.get?("current_page") %>" class="pure-menu-heading nav-pill-btn">
+                        <%= I18n.translate(locale, "Log in") %>
+                    </a>
+                <% end %>
+            <% end %>
+        </div>
+    </header>
+
+    <div id="page-container">
+        <nav id="sidebar">
+            <div class="sidebar-section">
+                <a class="feed-menu-item" href="/">
+                    <i class="icon ion-ios-search"></i>
+                    <span><%= I18n.translate(locale, "Search") %></span>
+                </a>
+                <%= rendered "components/feed_menu" %>
             </div>
 
+            <div class="sidebar-section">
+                <% if env.get? "user" %>
+                    <a class="feed-menu-item" href="/subscription_manager">
+                        <i class="icon ion-ios-people"></i>
+                        <span><%= I18n.translate(locale, "Manage subscriptions") %></span>
+                    </a>
+                <% else %>
+                    <a class="feed-menu-item" href="/preferences?referer=<%= env.get?("current_page") %>">
+                        <i class="icon ion-ios-cog"></i>
+                        <span><%= I18n.translate(locale, "Preferences") %></span>
+                    </a>
+                <% end %>
+            </div>
+        </nav>
+        <div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+        <div id="contents">
             <% if CONFIG.banner %>
                 <div class="h-box">
                     <h3><%= CONFIG.banner %></h3>
@@ -171,11 +191,12 @@
                     </div>
                 </div>
             </footer>
-
         </div>
     </div>
-    <script src="/js/handlers.js?v=<%= ASSET_COMMIT %>"></script>
+
     <script src="/js/themes.js?v=<%= ASSET_COMMIT %>"></script>
+    <script src="/js/sidebar.js?v=<%= ASSET_COMMIT %>"></script>
+    <script src="/js/ripple.js?v=<%= ASSET_COMMIT %>"></script>
     <% if env.get? "user" %>
         <script src="/js/sse.js?v=<%= ASSET_COMMIT %>"></script>
         <script id="notification_data" type="application/json">

@@ -2,19 +2,20 @@
 <title><%= I18n.translate(locale, "History") %> - Invidious</title>
 <% end %>
 
-<div class="pure-g h-box">
-    <div class="pure-u-1-3">
-        <h3><%= I18n.translate_count(locale, "generic_videos_count", user.watched.size, I18n::NumberFormatting::HtmlSpan) %></h3>
-    </div>
-    <div class="pure-u-1-3">
-        <h3 style="text-align:center">
-            <a href="/feed/subscriptions"><%= I18n.translate_count(locale, "generic_subscriptions_count", user.subscriptions.size, I18n::NumberFormatting::HtmlSpan) %></a>
-        </h3>
-    </div>
-    <div class="pure-u-1-3">
-        <h3 style="text-align:right">
-            <a href="/clear_watch_history"><%= I18n.translate(locale, "Clear watch history") %></a>
-        </h3>
+<div class="h-box">
+    <div class="md-feed-toolbar">
+        <h2>
+            <i class="icon ion-ios-time"></i>
+            <%= I18n.translate_count(locale, "generic_videos_count", user.watched.size, I18n::NumberFormatting::HtmlSpan) %>
+        </h2>
+        <div class="md-toolbar-actions">
+            <a class="pure-button pure-button-secondary" href="/feed/subscriptions">
+                <i class="icon ion-ios-people"></i>&nbsp;<%= I18n.translate_count(locale, "generic_subscriptions_count", user.subscriptions.size, I18n::NumberFormatting::HtmlSpan) %>
+            </a>
+            <a class="pure-button pure-button-secondary md-danger-pill" href="/clear_watch_history">
+                <i class="icon ion-ios-trash"></i>&nbsp;<%= I18n.translate(locale, "Clear watch history") %>
+            </a>
+        </div>
     </div>
 </div>
 

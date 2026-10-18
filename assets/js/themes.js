@@ -18,15 +18,15 @@ toggle_theme.addEventListener('click', function () {
 /** @param {THEME_DARK|THEME_LIGHT} theme */
 function setTheme(theme) {
     // By default body element has .no-theme class that uses OS theme via CSS @media rules
-    // It rewrites using hard className below
+    document.body.classList.remove('dark-theme', 'light-theme', 'no-theme');
     if (theme === THEME_DARK) {
-        toggle_theme.children[0].className = 'icon ion-ios-sunny';
-        document.body.className = 'dark-theme';
+        if (toggle_theme && toggle_theme.children[0]) toggle_theme.children[0].className = 'icon ion-ios-sunny';
+        document.body.classList.add('dark-theme');
     } else if (theme === THEME_LIGHT) {
-        toggle_theme.children[0].className = 'icon ion-ios-moon';
-        document.body.className = 'light-theme';
+        if (toggle_theme && toggle_theme.children[0]) toggle_theme.children[0].className = 'icon ion-ios-moon';
+        document.body.classList.add('light-theme');
     } else {
-        document.body.className = 'no-theme';
+        document.body.classList.add('no-theme');
     }
 }
 

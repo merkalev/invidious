@@ -2,66 +2,82 @@
 <title><%= I18n.translate(locale, "Import and Export Data") %> - Invidious</title>
 <% end %>
 
-<div class="h-box">
-    <form class="pure-form pure-form-aligned" enctype="multipart/form-data" action="/data_control?referer=<%= URI.encode_www_form(referer) %>" method="post">
+<div class="md-page-container">
+    <div class="md-page-header">
+        <div class="md-page-header-title">
+            <i class="icon ion-ios-swap"></i>
+            <h1><%= I18n.translate(locale, "Import and Export Data") %></h1>
+        </div>
+    </div>
+
+    <form class="pure-form pure-form-aligned md-preferences-form" enctype="multipart/form-data" action="/data_control?referer=<%= URI.encode_www_form(referer) %>" method="post">
         <fieldset>
-            <legend><%= I18n.translate(locale, "Import") %></legend>
+            <div class="md-settings-card">
+                <legend><i class="icon ion-md-cloud-upload"></i> <%= I18n.translate(locale, "Import") %></legend>
 
-            <div class="pure-control-group">
-                <label for="import_invidious"><%= I18n.translate(locale, "Import Invidious data") %></label>
-                <input type="file" id="import_invidious" name="import_invidious">
+                <div class="pure-control-group">
+                    <label for="import_invidious"><%= I18n.translate(locale, "Import Invidious data") %></label>
+                    <input type="file" id="import_invidious" name="import_invidious">
+                </div>
+
+                <div class="pure-control-group">
+                    <label for="import_youtube">
+                        <a rel="noopener noreferrer" target="_blank" href="https://github.com/iv-org/documentation/blob/master/docs/export-youtube-subscriptions.md">
+                            <%= I18n.translate(locale, "Import YouTube subscriptions") %>
+                        </a>
+                    </label>
+                    <input type="file" id="import_youtube" name="import_youtube">
+                </div>
+
+                <div class="pure-control-group">
+                    <label for="import_youtube_pl"><%= I18n.translate(locale, "Import YouTube playlist (.csv)") %></label>
+                    <input type="file" id="import_youtube_pl" name="import_youtube_pl">
+                </div>
+
+                <div class="pure-control-group">
+                    <label for="import_youtube_wh"><%= I18n.translate(locale, "Import YouTube watch history (.json)") %></label>
+                    <input type="file" id="import_youtube_wh" name="import_youtube_wh">
+                </div>
+
+                <div class="pure-control-group">
+                    <label for="import_freetube"><%= I18n.translate(locale, "Import FreeTube subscriptions (.db)") %></label>
+                    <input type="file" id="import_freetube" name="import_freetube">
+                </div>
+
+                <div class="pure-control-group">
+                    <label for="import_newpipe_subscriptions"><%= I18n.translate(locale, "Import NewPipe subscriptions (.json)") %></label>
+                    <input type="file" id="import_newpipe_subscriptions" name="import_newpipe_subscriptions">
+                </div>
+
+                <div class="pure-control-group">
+                    <label for="import_newpipe"><%= I18n.translate(locale, "Import NewPipe data (.zip)") %></label>
+                    <input type="file" id="import_newpipe" name="import_newpipe">
+                </div>
+
+                <div class="pure-controls" style="padding: 16px 24px; margin: 0; text-align: right;">
+                    <button type="submit" class="pure-button pure-button-primary">
+                        <i class="icon ion-md-cloud-upload"></i>&nbsp;<%= I18n.translate(locale, "Import") %>
+                    </button>
+                </div>
             </div>
 
-            <div class="pure-control-group">
-                <label for="import_youtube">
-                    <a rel="noopener noreferrer" target="_blank" href="https://github.com/iv-org/documentation/blob/master/docs/export-youtube-subscriptions.md">
-                        <%= I18n.translate(locale, "Import YouTube subscriptions") %>
+            <div class="md-settings-card">
+                <legend><i class="icon ion-md-cloud-download"></i> <%= I18n.translate(locale, "Export") %></legend>
+
+                <div class="md-action-grid">
+                    <a class="md-action-tile" href="/subscription_manager?action_takeout=1">
+                        <i class="icon ion-md-download"></i>
+                        <span><%= I18n.translate(locale, "Export subscriptions as OPML") %></span>
                     </a>
-                </label>
-                <input type="file" id="import_youtube" name="import_youtube">
-            </div>
-
-            <div class="pure-control-group">
-                <label for="import_youtube_pl"><%= I18n.translate(locale, "Import YouTube playlist (.csv)") %></label>
-                <input type="file" id="import_youtube_pl" name="import_youtube_pl">
-            </div>
-
-            <div class="pure-control-group">
-                <label for="import_youtube_wh"><%= I18n.translate(locale, "Import YouTube watch history (.json)") %></label>
-                <input type="file" id="import_youtube_wh" name="import_youtube_wh">
-            </div>
-
-            <div class="pure-control-group">
-                <label for="import_freetube"><%= I18n.translate(locale, "Import FreeTube subscriptions (.db)") %></label>
-                <input type="file" id="import_freetube" name="import_freetube">
-            </div>
-
-            <div class="pure-control-group">
-                <label for="import_newpipe_subscriptions"><%= I18n.translate(locale, "Import NewPipe subscriptions (.json)") %></label>
-                <input type="file" id="import_newpipe_subscriptions" name="import_newpipe_subscriptions">
-            </div>
-
-            <div class="pure-control-group">
-                <label for="import_newpipe"><%= I18n.translate(locale, "Import NewPipe data (.zip)") %></label>
-                <input type="file" id="import_newpipe" name="import_newpipe">
-            </div>
-
-            <div class="pure-controls">
-                <button type="submit" class="pure-button pure-button-primary"><%= I18n.translate(locale, "Import") %></button>
-            </div>
-
-            <legend><%= I18n.translate(locale, "Export") %></legend>
-
-            <div class="pure-control-group">
-                <a href="/subscription_manager?action_takeout=1"><%= I18n.translate(locale, "Export subscriptions as OPML") %></a>
-            </div>
-
-            <div class="pure-control-group">
-                <a href="/subscription_manager?action_takeout=1&format=newpipe"><%= I18n.translate(locale, "Export subscriptions as OPML (for NewPipe & FreeTube)") %></a>
-            </div>
-
-            <div class="pure-control-group">
-                <a href="/subscription_manager?action_takeout=1&format=json"><%= I18n.translate(locale, "Export data as JSON") %></a>
+                    <a class="md-action-tile" href="/subscription_manager?action_takeout=1&format=newpipe">
+                        <i class="icon ion-md-download"></i>
+                        <span><%= I18n.translate(locale, "Export subscriptions as OPML (for NewPipe & FreeTube)") %></span>
+                    </a>
+                    <a class="md-action-tile" href="/subscription_manager?action_takeout=1&format=json">
+                        <i class="icon ion-md-code"></i>
+                        <span><%= I18n.translate(locale, "Export data as JSON") %></span>
+                    </a>
+                </div>
             </div>
         </fieldset>
     </form>

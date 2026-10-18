@@ -198,9 +198,9 @@ class Config
     include YAML::Serializable
     include JSON::Serializable
 
-    # This are the default values that VideoJS uses.
-    # See `assets/videojs/video.js/video.js` file
-    # and search for `GOAL_BUFFER_LENGTH` and `MAX_GOAL_BUFFER_LENGTH`
+    # These used to tune Video.js 8's VHS buffer. Video.js 10's engines are
+    # configured through `source.engine` instead, so these are kept only for
+    # backward compatibility of existing config.yaml files.
     property goal_buffer_length : Int32? = 30
     property max_goal_buffer_length : Int32? = 60
   end

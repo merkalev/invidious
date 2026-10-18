@@ -1,3 +1,13 @@
+<%
+  # Icons (ionicons) next to each entry, used e.g. by the left sidebar
+  feed_icons = {
+    "Popular"       => "ion-ios-star",
+    "Trending"      => "ion-ios-flame",
+    "Subscriptions" => "ion-ios-albums",
+    "Playlists"     => "ion-ios-list",
+    "History"       => "ion-ios-clock",
+  }
+%>
 <div class="feed-menu">
     <% feed_menu = env.get("preferences").as(Preferences).feed_menu.dup %>
     <% if !env.get?("user") %>
@@ -5,7 +15,8 @@
     <% end %>
     <% feed_menu.each do |feed| %>
         <a href="/feed/<%= feed.downcase %>" class="feed-menu-item pure-menu-heading">
-            <%= I18n.translate(locale, feed) %>
+            <i class="icon <%= feed_icons[feed]? || "ion-ios-arrow-forward" %>"></i>
+            <span><%= I18n.translate(locale, feed) %></span>
         </a>
     <% end %>
 </div>

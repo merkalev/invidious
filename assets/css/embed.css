@@ -1,27 +1,16 @@
-#player {
+/*
+ * Embed page (no packaging chrome): the player fills the viewport.
+ * <video-player> is boxless; the skin is the visible surface.
+ */
+
+video-player {
+  display: contents;
+}
+
+video-skin {
   position: fixed;
-  right: 0;
-  bottom: 0;
-  min-width: 100%;
-  min-height: 100%;
-  width: auto;
-  height: auto;
-  z-index: -100;
-}
-
-.watch-on-invidious {
-  font-size: 1.3em !important;
-  font-weight: bold;
-  white-space: nowrap;
-  margin: 0 1em 0 1em !important;
-  order: 3;
-}
-
-.watch-on-invidious > a {
-  color: white;
-}
-
-.watch-on-invidious > a:hover,
-.watch-on-invidious > a:focus {
-  color: rgba(0, 182, 240, 1);;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  --media-border-radius: 0;
 }

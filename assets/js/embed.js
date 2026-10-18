@@ -10,7 +10,7 @@ function get_playlist(plid) {
     } else {
         plid_url = '/api/v1/playlists/' + plid +
             '?index=' + video_data.index +
-            '&continuation' + video_data.id +
+            '&continuation=' + video_data.id +
             '&format=html&hl=' + video_data.preferences.locale;
     }
 
@@ -19,7 +19,7 @@ function get_playlist(plid) {
             if (!response.nextVideo)
                 return;
 
-            player.on('ended', function () {
+            player.addEventListener('ended', function () {
                 var url = new URL('https://example.com/embed/' + response.nextVideo);
 
                 url.searchParams.set('list', plid);
@@ -41,10 +41,17 @@ function get_playlist(plid) {
 }
 
 addEventListener('load', function (e) {
+    var embedTitle = document.querySelector('.iv-embed-title');
+    if (embedTitle && typeof player !== 'undefined' && player) {
+        player.addEventListener('playing', function () { embedTitle.hidden = true; });
+        player.addEventListener('pause', function () { embedTitle.hidden = false; });
+        player.addEventListener('ended', function () { embedTitle.hidden = false; });
+    }
+
     if (video_data.plid) {
         get_playlist(video_data.plid);
     } else if (video_data.video_series) {
-        player.on('ended', function () {
+        player.addEventListener('ended', function () {
             var url = new URL('https://example.com/embed/' + video_data.video_series.shift());
 
             if (video_data.params.autoplay || video_data.params.continue_autoplay)

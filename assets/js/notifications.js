@@ -50,7 +50,7 @@ function create_notification_stream(subscriptions) {
 
         // permission for notifications handled on settings page. JS handler is in handlers.js
         if (window.Notification && Notification.permission === 'granted') {
-            var notification_text = notification.liveNow ? notification_data.live_now_text : notification_data.upload_text;
+            var notification_text = notification.liveNow ? notification_data.live_upload_text : notification_data.upload_text;
             notification_text = notification_text.replace('`x`', notification.author);
 
             var system_notification = new Notification(notification_text, {

@@ -1,31 +1,20 @@
-<link rel="stylesheet" href="/videojs/video.js/video-js.css?v=<%= ASSET_COMMIT %>">
-<link rel="stylesheet" href="/videojs/videojs-http-source-selector/videojs-http-source-selector.css?v=<%= ASSET_COMMIT %>">
-<link rel="stylesheet" href="/videojs/videojs-markers/videojs.markers.css?v=<%= ASSET_COMMIT %>">
-<link rel="stylesheet" href="/videojs/videojs-share/videojs-share.css?v=<%= ASSET_COMMIT %>">
-<link rel="stylesheet" href="/videojs/videojs-vtt-thumbnails/videojs-vtt-thumbnails.css?v=<%= ASSET_COMMIT %>">
-<link rel="stylesheet" href="/videojs/videojs-mobile-ui/videojs-mobile-ui.css?v=<%= ASSET_COMMIT %>">
+<%
+    # Video.js 10 (@videojs/html) — browser-ready bundles, self-hosted under
+    # assets/videojs/html/.
+    #
+    #  - /video.js registers <video-player>, <video-skin> and the skin's UI
+    #    elements.
+    #  - The matching stylesheet is inlined by the bundle at upgrade time; the
+    #    copies linked below style the page before that happens (see the
+    #    `global.css` note in the Video.js self-hosting guide).
+%>
+<link rel="stylesheet" href="/videojs/html/global.css?v=<%= ASSET_COMMIT %>">
+<link rel="stylesheet" href="/videojs/html/video.css?v=<%= ASSET_COMMIT %>">
 <link rel="stylesheet" href="/css/player.css?v=<%= ASSET_COMMIT %>">
 
-<script src="/videojs/video.js/video.js?v=<%= ASSET_COMMIT %>"></script>
-<script src="/videojs/videojs-mobile-ui/videojs-mobile-ui.js?v=<%= ASSET_COMMIT %>"></script>
-<script src="/videojs/videojs-contrib-quality-levels/videojs-contrib-quality-levels.js?v=<%= ASSET_COMMIT %>"></script>
-<script src="/videojs/videojs-http-source-selector/videojs-http-source-selector.js?v=<%= ASSET_COMMIT %>"></script>
-<script src="/videojs/videojs-markers/videojs-markers.js?v=<%= ASSET_COMMIT %>"></script>
-<script src="/videojs/videojs-share/videojs-share.js?v=<%= ASSET_COMMIT %>"></script>
-<script src="/videojs/videojs-vtt-thumbnails/videojs-vtt-thumbnails.js?v=<%= ASSET_COMMIT %>"></script>
-
-
-<% if params.annotations %>
-    <link rel="stylesheet" href="/css/videojs-youtube-annotations.min.css?v=<%= ASSET_COMMIT %>">
-    <script src="/js/videojs-youtube-annotations.min.js?v=<%= ASSET_COMMIT %>"></script>
-<% end %>
-
-<% if params.listen || params.quality != "dash" %>
-    <link rel="stylesheet" href="/css/quality-selector.css?v=<%= ASSET_COMMIT %>">
-    <script src="/js/silvermine-videojs-quality-selector.min.js?v=<%= ASSET_COMMIT %>"></script>
-<% end %>
-
-<% if !params.listen && params.vr_mode %>
-    <link rel="stylesheet" href="/videojs/videojs-vr/videojs-vr.css?v=<%= ASSET_COMMIT %>">
-    <script src="/videojs/videojs-vr/videojs-vr.js?v=<%= ASSET_COMMIT %>"></script>
+<script type="module" src="/videojs/html/video.js?v=<%= ASSET_COMMIT %>"></script>
+<% if (video.hls_manifest_url) && video.live_now && !CONFIG.disabled?("livestreams") %>
+    <script type="module" src="/videojs/html/media/hlsjs-video.js?v=<%= ASSET_COMMIT %>"></script>
+<% elsif !params.listen && params.quality == "dash" && !CONFIG.disabled?("dash") %>
+    <script type="module" src="/videojs/html/media/dash-video.js?v=<%= ASSET_COMMIT %>"></script>
 <% end %>

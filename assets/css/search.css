@@ -1,32 +1,64 @@
-#filters-collapse summary {
-	/* This should hide the marker */
-	display: block;
+#filters-collapse {
+	padding: 4px 16px 0 16px;
+}
 
-	font-size: 1.17em;
-	font-weight: bold;
-	margin: 0 auto 10px auto;
+#filters-collapse summary {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 0.95rem;
+	font-weight: 500;
+	padding: 8px 16px;
+	margin: 4px 0 8px 0;
+	border-radius: var(--radius-round, 999px);
+	background-color: var(--chip-bg);
+	color: var(--text);
 	cursor: pointer;
+	user-select: none;
+	transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#filters-collapse summary:hover,
+#filters-collapse summary:focus-visible {
+	background-color: var(--chip-hover);
+}
+
+#filters-collapse details[open] > summary {
+	background-color: var(--tonal-bg, var(--chip-hover));
+	color: var(--tonal-text, var(--text));
 }
 
 #filters-collapse summary::-webkit-details-marker,
 #filters-collapse summary::marker { display: none; }
 
 #filters-collapse summary:before {
-	border-radius: 5px;
-	content: "[ + ]";
-	margin: -2px 10px 0 10px;
-	padding: 1px 0 3px 0;
-	text-align: center;
-	width: 40px;
+	content: "tune";
+	font-family: "Ionicons";
+	content: "\f2options";
+	content: "+";
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	font-weight: 700;
+	font-size: 1rem;
+	line-height: 1;
 }
 
-#filters-collapse details[open] > summary:before { content: "[ − ]"; }
+#filters-collapse details[open] > summary:before { content: "−"; }
 
 
 #filters-box {
-	padding: 10px 20px 20px 10px;
-	margin: 10px 15px;
+	padding: 16px 20px;
+	margin: 8px 0 16px 0;
+	border-radius: var(--radius-card-lg, 16px);
+	background: var(--surface-container, var(--bg-secondary));
+	border: 1px solid var(--outline-variant, var(--border));
+	box-shadow: var(--shadow-1);
 }
+
 #filters-flex {
 	display: flex;
 	flex-wrap: wrap;
@@ -34,10 +66,12 @@
 	align-items: flex-start;
 	align-content: flex-start;
 	justify-content: flex-start;
+	gap: 12px 24px;
 }
 
 
-fieldset, legend {
+#filters-box fieldset,
+#filters-box legend {
 	display: contents !important;
 	border: none !important;
 	margin: 0 !important;
@@ -46,31 +80,56 @@ fieldset, legend {
 
 
 .filter-column {
-	display: inline-block;
 	display: inline-flex;
 	width: max-content;
-	min-width: max-content;
+	min-width: 140px;
 	max-width: 16em;
-	margin: 15px;
-	flex-grow: 2;
+	margin: 4px 0;
+	flex-grow: 1;
 	flex-basis: auto;
 	flex-direction: column;
 }
-.filter-name, .filter-options {
+
+.filter-name {
 	display: block;
-	padding: 5px 10px;
+	padding: 6px 8px;
+	margin: 0 0 4px 0;
+	font-size: 0.8rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-secondary);
+	border-bottom: 1px solid var(--divider);
+	text-align: start;
+}
+
+.filter-options {
+	display: block;
+	padding: 4px 8px;
 	margin: 0;
 	text-align: start;
 }
 
-.filter-options div { margin: 6px 0; }
+.filter-options div {
+	margin: 6px 0;
+	display: flex;
+	align-items: center;
+}
 .filter-options div * { vertical-align: middle; }
-.filter-options label { margin: 0 10px; }
+.filter-options label {
+	margin: 0 8px;
+	cursor: pointer;
+	color: var(--text);
+	font-size: 0.9rem;
+}
 
 
 #filters-apply {
-	text-align: right; /* IE11 only */
-	text-align: end;   /* Override for compatible browsers */
+	text-align: right;
+	text-align: end;
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid var(--divider);
 }
 
 /* Error message */
@@ -79,43 +138,20 @@ fieldset, legend {
 	text-align: center;
 	line-height: 180%;
 	font-size: 110%;
-	padding: 15px 15px 125px 15px;
+	padding: 48px 20px 96px 20px;
+	color: var(--text-secondary);
 }
 
 /* Responsive rules */
 
 @media only screen and (max-width: 800px) {
-	summary { font-size: 1.30em; }
+	#filters-collapse summary { font-size: 1rem; }
 	#filters-box {
-		margin: 10px 0 0 0;
-		padding: 0;
+		margin: 8px 0;
+		padding: 12px 14px;
 	}
 	#filters-apply {
 		text-align: center;
-		padding: 15px;
-	}
-}
-
-/* Light theme */
-
-.light-theme #filters-box {
-	background: #dfdfdf;
-}
-
-@media (prefers-color-scheme: light) {
-	.no-theme #filters-box {
-		background: #dfdfdf;
-	}
-}
-
-/* Dark theme */
-
-.dark-theme #filters-box {
-	background: #373737;
-}
-
-@media (prefers-color-scheme: dark) {
-	.no-theme #filters-box {
-		background: #373737;
+		padding: 12px 0 4px 0;
 	}
 }

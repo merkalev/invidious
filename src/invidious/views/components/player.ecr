@@ -1,100 +1,128 @@
 <%
     invidious_companion_check_id = invidious_companion_encrypt(video.id) if invidious_companion
+
+    # Player mode: live HLS, DASH (adaptive quality menu), or plain <video>
+    # (progressive formats / audio-only "listen" mode).
+    is_live = false
+    if (hls_url = video.hls_manifest_url) && video.live_now && !CONFIG.disabled?("livestreams")
+        is_live = true
+        hls_url = URI.parse(hls_url).request_target
+        hls_url += "?local=true" if params.local
+        if invidious_companion
+            sep = hls_url.includes?('?') ? '&' : '?'
+            hls_url = invidious_companion.public_url.to_s + hls_url + "#{sep}check=#{invidious_companion_check_id}"
+        end
+    end
+
+    # Streaming engines play extensionless proxy URLs, so the media type is
+    # delivered through the `source` property in assets/js/player.js instead.
+    dash_url : String? = nil
+    if !is_live && !params.listen && params.quality == "dash" && !CONFIG.disabled?("dash")
+        dash_url = "/api/manifest/dash/id/#{video.id}?local=true&unique_res=1"
+        dash_url = invidious_companion.public_url.to_s + dash_url +
+                    "&check=#{invidious_companion_check_id}" if invidious_companion
+    end
+
+    # Hover thumbnails come from a storyboard served as WebVTT. Live streams
+    # don't have storyboards.
+    storyboard_url = video.live_now ? nil : "/api/v1/storyboards/#{video.id}?height=90"
+
+    preload = params.preload ? "auto" : "none"
+
+    common_media_attrs = [
+        "id=\"player\"",
+        "class=\"iv-media\"",
+        "preload=\"#{preload}\"",
+        "playsinline",
+        (params.autoplay ? "autoplay" : nil),
+        (params.video_loop ? "loop" : nil),
+        "poster=\"#{thumbnail}\"",
+    ].compact.join(" ")
+
+    # Captions are passed to assets/js/player.js as data, and injected into
+    # the media element from there. The preferred language comes first.
+    caption_list = (preferred_captions + captions).map do |caption|
+        api_captions_url = "/api/v1/captions/#{video.id}?label=#{URI.encode_www_form(caption.name)}"
+        api_captions_url = invidious_companion.public_url.to_s + api_captions_url +
+                            "&check=#{invidious_companion_check_id}" if invidious_companion
+        {
+            "label"    => caption.name,
+            "language" => caption.language_code,
+            "src"      => api_captions_url,
+        }
+    end
 %>
-<video style="outline:none;width:100%;background-color:#000" playsinline poster="<%= thumbnail %>"
-    id="player" class="on-video_player video-js player-style-<%= params.player_style %>"
-    preload="<% if params.preload %>auto<% else %>none<% end %>"
-    <% if params.autoplay %>autoplay<% end %>
-    <% if params.video_loop %>loop<% end %>
-    <% if params.controls %>controls<% end %>>
-    <% if (hlsvp = video.hls_manifest_url) && video.live_now && !CONFIG.disabled?("livestreams") %>
-        <source src="<%= URI.parse(hlsvp).request_target %><% if params.local %>?local=true<% end %>" type="application/x-mpegURL" label="livestream">
-    <% else %>
-        <% if params.listen %>
-            <% # default to 128k m4a stream
-               best_m4a_stream_index = 0
-               best_m4a_stream_bitrate = 0
-               audio_streams.each_with_index do |fmt, i|
-                 bandwidth = fmt["bitrate"].as_i
-                 if (fmt["mimeType"].as_s.starts_with?("audio/mp4") && bandwidth > best_m4a_stream_bitrate)
-                   best_m4a_stream_bitrate = bandwidth
-                   best_m4a_stream_index = i
-                 end
-               end
-
-               audio_streams.each_with_index do |fmt, i|
-                src_url  = "/latest_version?id=#{video.id}&itag=#{fmt["itag"]}"
-                src_url += "&local=true" if params.local
-                src_url = invidious_companion.public_url.to_s + src_url +
-                            "&check=#{invidious_companion_check_id}" if (invidious_companion)
-
-                bitrate = fmt["bitrate"]
-                mimetype = HTML.escape(fmt["mimeType"].as_s)
-
-                selected = (i == best_m4a_stream_index)
-            %>
-                <source src="<%= src_url %>" type='<%= mimetype %>' label="<%= bitrate %>k" selected="<%= selected %>">
-                <% if !params.local && !CONFIG.disabled?("local") %>
-                <source src="<%= src_url %>&local=true" type='<%= mimetype %>' hidequalityoption="true">
+<video-player content-title="<%= HTML.escape(video.title) %>">
+    <video-skin
+        style="--media-accent-color: var(--accent, #f00); --media-accent-text-color: #fff; --media-border-radius: var(--radius-card, 12px); --media-font-family: 'Roboto', 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;">
+        <% if is_live %>
+            <hlsjs-video <%= common_media_attrs %>></hlsjs-video>
+        <% elsif dash_url %>
+            <dash-video <%= common_media_attrs %>>
+                <% if storyboard_url %>
+                <track kind="metadata" label="thumbnails" src="<%= storyboard_url %>" default>
                 <% end %>
-            <% end %>
+            </dash-video>
         <% else %>
-            <% if params.quality == "dash"
-               src_url = "/api/manifest/dash/id/" + video.id + "?local=true&unique_res=1"
-               src_url = invidious_companion.public_url.to_s + src_url +
-                            "&check=#{invidious_companion_check_id}" if (invidious_companion)
-            %>
-                <source src="<%= src_url %>" type='application/dash+xml' label="dash">
-            <% end %>
-
-            <%
-            fmt_stream.reject! { |f| f["itag"] == 17 }
-            fmt_stream.sort_by! {|f| params.quality == f["quality"] ? 0 : 1 }
-            fmt_stream.each_with_index do |fmt, i|
-                src_url  = "/latest_version?id=#{video.id}&itag=#{fmt["itag"]}"
-                src_url += "&local=true" if params.local
-                src_url = invidious_companion.public_url.to_s + src_url +
-                            "&check=#{invidious_companion_check_id}" if (invidious_companion)
-
-                quality = fmt["quality"]
-                mimetype = HTML.escape(fmt["mimeType"].as_s)
-
-                selected = params.quality ? (params.quality == quality) : (i == 0)
-            %>
-                <source src="<%= src_url %>" type="<%= mimetype %>" label="<%= quality %>" selected="<%= selected %>">
-                <% if !params.local && !CONFIG.disabled?("local") %>
-                <source src="<%= src_url %>&local=true" type="<%= mimetype %>" hidequalityoption="true">
+            <video <%= common_media_attrs %>>
+                <% if params.listen %>
+                    <% # default to 128k m4a stream
+                       best_m4a_stream_index = 0
+                       best_m4a_stream_bitrate = 0
+                       audio_streams.each_with_index do |fmt, i|
+                         bandwidth = fmt["bitrate"].as_i
+                         if (fmt["mimeType"].as_s.starts_with?("audio/mp4") && bandwidth > best_m4a_stream_bitrate)
+                           best_m4a_stream_bitrate = bandwidth
+                           best_m4a_stream_index = i
+                         end
+                       end
+                    %>
+                    <% audio_streams.each_with_index do |fmt, i| %>
+                        <% src_url  = "/latest_version?id=#{video.id}&itag=#{fmt["itag"]}"
+                           src_url += "&local=true" if params.local
+                           src_url = invidious_companion.public_url.to_s + src_url +
+                                       "&check=#{invidious_companion_check_id}" if (invidious_companion)
+                        %>
+                        <source src="<%= src_url %>" type="<%= HTML.escape(fmt["mimeType"].as_s) %>" label="<%= fmt["bitrate"] %>k" <% if i == best_m4a_stream_index %>selected<% end %>>
+                    <% end %>
+                <% else %>
+                    <%
+                    fmt_stream.reject! { |f| f["itag"] == 17 }
+                    fmt_stream.sort_by! {|f| params.quality == f["quality"] ? 0 : 1 }
+                    %>
+                    <% fmt_stream.each_with_index do |fmt, i| %>
+                        <% src_url  = "/latest_version?id=#{video.id}&itag=#{fmt["itag"]}"
+                           src_url += "&local=true" if params.local
+                           src_url = invidious_companion.public_url.to_s + src_url +
+                                       "&check=#{invidious_companion_check_id}" if (invidious_companion)
+                        %>
+                        <source src="<%= src_url %>" type="<%= HTML.escape(fmt["mimeType"].as_s) %>" label="<%= fmt["quality"] %>" <% if params.quality ? (params.quality == fmt["quality"]) : (i == 0) %>selected<% end %>>
+                    <% end %>
+                    <% if storyboard_url %>
+                    <track kind="metadata" label="thumbnails" src="<%= storyboard_url %>" default>
+                    <% end %>
                 <% end %>
-            <% end %>
+            </video>
         <% end %>
-
-        <% preferred_captions.each do |caption|
-            api_captions_url = "/api/v1/captions/"
-            api_captions_url = invidious_companion.public_url.to_s + api_captions_url if (invidious_companion)
-            api_captions_check_id = "&check=#{invidious_companion_check_id}"
-        %>
-            <track kind="captions" src="<%= api_captions_url %><%= video.id %>?label=<%= caption.name %><%= api_captions_check_id %>" label="<%= caption.name %>">
-        <% end %>
-
-        <% captions.each do |caption|
-            api_captions_url = "/api/v1/captions/"
-            api_captions_url = invidious_companion.public_url.to_s + api_captions_url if (invidious_companion)
-            api_captions_check_id = "&check=#{invidious_companion_check_id}"
-        %>
-            <track kind="captions" src="<%= api_captions_url %><%= video.id %>?label=<%= caption.name %><%= api_captions_check_id %>" label="<%= caption.name %>">
-        <% end %>
-    <% end %>
-</video>
+    </video-skin>
+</video-player>
 
 <script id="player_data" type="application/json">
-<%=
-{
-    "aspect_ratio" => aspect_ratio,
-    "title" => video.title,
-    "description" => HTML.escape(video.short_description),
-    "thumbnail" => thumbnail,
-    "preferred_caption_found" => !preferred_captions.empty?
-}.to_pretty_json
+<%
+    player_data_json = {
+        "aspect_ratio"            => aspect_ratio,
+        "title"                   => video.title,
+        "description"             => HTML.escape(video.short_description),
+        "thumbnail"               => thumbnail,
+        "preferred_caption_found" => !preferred_captions.empty?,
+        "captions"                => caption_list,
+    }
+    if hls_url
+        player_data_json["hls_url"] = hls_url
+    elsif dash_url
+        player_data_json["dash_url"] = dash_url
+    end
 %>
+<%= player_data_json.to_pretty_json %>
 </script>
 <script src="/js/player.js?v=<%= ASSET_COMMIT %>"></script>
