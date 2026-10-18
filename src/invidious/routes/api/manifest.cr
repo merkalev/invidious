@@ -8,6 +8,10 @@ module Invidious::Routes::API::Manifest
     id = env.params.url["id"]
     region = env.params.query["region"]?
 
+    if !Invidious::Managed::Whitelist.is_video_whitelisted?(id) && !Invidious::Managed::Admin.is_admin?(env)
+      haltf env, status_code: 403
+    end
+
     if CONFIG.invidious_companion.present?
       invidious_companion = CONFIG.invidious_companion.sample
       return env.redirect "#{invidious_companion.public_url}/api/manifest/dash/id/#{id}?#{env.params.query}"

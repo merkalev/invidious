@@ -13,6 +13,10 @@ module Invidious::Routes::API::V1::Search
       return error_json(400, ex)
     end
 
+    if CONFIG.managed_mode
+      search_results.select! { |item| Invidious::Managed::Whitelist.is_item_whitelisted?(item) }
+    end
+
     JSON.build do |json|
       json.array do
         search_results.each do |item|

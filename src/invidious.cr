@@ -45,6 +45,7 @@ require "./invidious/*"
 require "./invidious/comments/*"
 require "./invidious/channels/*"
 require "./invidious/user/*"
+require "./invidious/managed/*"
 require "./invidious/search/*"
 require "./invidious/routes/**"
 require "./invidious/jobs/base_job"
@@ -165,6 +166,9 @@ LOGGER = Invidious::LogHandler.new(OUTPUT, CONFIG.log_level, CONFIG.colorize_log
 
 # Check table integrity
 Invidious::Database.check_integrity(CONFIG)
+
+# Initialize Managed Whitelist cache
+Invidious::Managed::Whitelist.init
 
 {% if !flag?(:skip_videojs_download) %}
   # Resolve player dependencies. This is done at compile time.

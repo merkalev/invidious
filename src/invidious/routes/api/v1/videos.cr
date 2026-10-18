@@ -21,6 +21,11 @@ module Invidious::Routes::API::V1::Videos
       return error_json(500, ex)
     end
 
+    if !Invidious::Managed::Whitelist.is_video_whitelisted?(video.id, video.ucid) && !Invidious::Managed::Admin.is_admin?(env)
+      env.response.status_code = 403
+      return {"error" => "This video is not on the administrator whitelist."}.to_json
+    end
+
     return JSON.build do |json|
       Invidious::JSONify::APIv1.video(video, json, locale: locale, proxy: proxy)
     end

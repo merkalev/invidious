@@ -442,6 +442,14 @@ module Invidious::Routes::Channels
       return error_template(500, ex)
     end
 
+    is_admin = Invidious::Managed::Admin.is_admin?(env)
+    is_whitelisted = Invidious::Managed::Whitelist.is_channel_whitelisted?(ucid)
+
+    if !is_whitelisted && !is_admin
+      env.response.status_code = 403
+      return templated "managed/blocked_channel"
+    end
+
     env.set "search", "channel:#{ucid} "
     return {locale, user, subscriptions, continuation, ucid, channel}
   end

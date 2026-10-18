@@ -1,0 +1,339 @@
+<div class="h-box" style="padding: 24px 16px; max-width: 1200px; margin: 0 auto;">
+    <!-- Top Header & Status -->
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--divider);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--primary, #0b57d0); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                <i class="icon ion-ios-shield"></i>
+            </div>
+            <div>
+                <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: var(--text);">Invidious Managed Admin Panel</h1>
+                <p style="margin: 2px 0 0; color: var(--text-secondary); font-size: 13px;">Control approved channels, videos, and strict access policies</p>
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: var(--radius-pill, 9999px); background: <%= CONFIG.managed_mode ? "rgba(46, 125, 50, 0.12)" : "rgba(239, 108, 0, 0.12)" %>; color: <%= CONFIG.managed_mode ? "#2e7d32" : "#e65100" %>; font-size: 13px; font-weight: 600;">
+                <i class="icon <%= CONFIG.managed_mode ? "ion-ios-lock" : "ion-ios-unlock" %>"></i>
+                Managed Mode: <%= CONFIG.managed_mode ? "STRICT WHITELIST (ACTIVE)" : "UNRESTRICTED (DISABLED)" %>
+            </span>
+
+            <a href="/admin/logout" class="pure-button" style="border-radius: var(--radius-pill, 9999px); font-size: 13px; padding: 6px 14px; background: var(--surface-container-high, #e8e5ea); color: var(--text); border: 1px solid var(--outline-variant); text-decoration: none;">
+                <i class="icon ion-ios-log-out"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- Feedback alerts -->
+    <% if error %>
+        <div style="background: rgba(229, 57, 53, 0.1); border-left: 4px solid #e53935; color: #d32f2f; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 14px; display: flex; align-items: center; gap: 10px;">
+            <i class="icon ion-ios-alert" style="font-size: 20px;"></i>
+            <span><%= HTML.escape(error.to_s) %></span>
+        </div>
+    <% end %>
+
+    <% if success %>
+        <div style="background: rgba(46, 125, 50, 0.1); border-left: 4px solid #2e7d32; color: #2e7d32; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 14px; display: flex; align-items: center; gap: 10px;">
+            <i class="icon ion-ios-checkmark-circle" style="font-size: 20px;"></i>
+            <span><%= HTML.escape(success.to_s) %></span>
+        </div>
+    <% end %>
+
+    <!-- KPI Metric Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px;">
+        <div style="background: var(--surface-container, #efecf1); padding: 18px 20px; border-radius: 14px; border: 1px solid var(--outline-variant);">
+            <div style="color: var(--text-secondary); font-size: 13px; font-weight: 500; margin-bottom: 6px;">Whitelisted Channels</div>
+            <div style="font-size: 28px; font-weight: 700; color: var(--text);"><%= channels.size %></div>
+            <div style="color: var(--text-tertiary); font-size: 12px; margin-top: 4px;">All videos from these channels allowed</div>
+        </div>
+
+        <div style="background: var(--surface-container, #efecf1); padding: 18px 20px; border-radius: 14px; border: 1px solid var(--outline-variant);">
+            <div style="color: var(--text-secondary); font-size: 13px; font-weight: 500; margin-bottom: 6px;">Individual Whitelisted Videos</div>
+            <div style="font-size: 28px; font-weight: 700; color: var(--text);"><%= videos.size %></div>
+            <div style="color: var(--text-tertiary); font-size: 12px; margin-top: 4px;">Specific videos permitted across YouTube</div>
+        </div>
+
+        <div style="background: var(--surface-container, #efecf1); padding: 18px 20px; border-radius: 14px; border: 1px solid var(--outline-variant);">
+            <div style="color: var(--text-secondary); font-size: 13px; font-weight: 500; margin-bottom: 6px;">Bypass Protection</div>
+            <div style="font-size: 20px; font-weight: 700; color: #2e7d32; display: flex; align-items: center; gap: 6px;">
+                <i class="icon ion-ios-checkmark-circle"></i> Enforced
+            </div>
+            <div style="color: var(--text-tertiary); font-size: 12px; margin-top: 8px;">Direct URLs & search bypassing blocked</div>
+        </div>
+
+        <div style="background: var(--surface-container, #efecf1); padding: 18px 20px; border-radius: 14px; border: 1px solid var(--outline-variant);">
+            <div style="color: var(--text-secondary); font-size: 13px; font-weight: 500; margin-bottom: 6px;">Public Directory</div>
+            <a href="/channels/approved" target="_blank" style="font-size: 15px; font-weight: 600; color: var(--primary, #0b57d0); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                /channels/approved <i class="icon ion-ios-open"></i>
+            </a>
+            <div style="color: var(--text-tertiary); font-size: 12px; margin-top: 8px;">View what regular users see</div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div style="display: flex; gap: 8px; border-bottom: 2px solid var(--divider); margin-bottom: 24px;">
+        <a href="/admin?tab=channels" style="padding: 10px 18px; font-weight: 600; font-size: 14px; text-decoration: none; border-bottom: 3px solid <%= tab == "channels" ? "var(--primary, #0b57d0)" : "transparent" %>; color: <%= tab == "channels" ? "var(--primary, #0b57d0)" : "var(--text-secondary)" %>;">
+            <i class="icon ion-ios-tv"></i> Whitelisted Channels (<%= channels.size %>)
+        </a>
+        <a href="/admin?tab=videos" style="padding: 10px 18px; font-weight: 600; font-size: 14px; text-decoration: none; border-bottom: 3px solid <%= tab == "videos" ? "var(--primary, #0b57d0)" : "transparent" %>; color: <%= tab == "videos" ? "var(--primary, #0b57d0)" : "var(--text-secondary)" %>;">
+            <i class="icon ion-ios-videocam"></i> Whitelisted Videos (<%= videos.size %>)
+        </a>
+        <a href="/admin?tab=settings" style="padding: 10px 18px; font-weight: 600; font-size: 14px; text-decoration: none; border-bottom: 3px solid <%= tab == "settings" ? "var(--primary, #0b57d0)" : "transparent" %>; color: <%= tab == "settings" ? "var(--primary, #0b57d0)" : "var(--text-secondary)" %>;">
+            <i class="icon ion-ios-settings"></i> Policies & Backup
+        </a>
+    </div>
+
+    <!-- TAB 1: CHANNELS -->
+    <% if tab == "channels" %>
+        <!-- Add Channel Box -->
+        <div style="background: var(--surface-container-low, #f5f2f7); border: 1px solid var(--outline-variant); border-radius: 14px; padding: 20px; margin-bottom: 24px;">
+            <h3 style="margin: 0 0 8px; font-size: 16px; font-weight: 700; color: var(--text);">
+                <i class="icon ion-ios-add-circle" style="color: var(--primary, #0b57d0);"></i> Add Channel to Whitelist
+            </h3>
+            <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-secondary);">
+                Whitelisting a channel allows regular users to view all videos, shorts, livestreams, and playlists uploaded by this channel.
+            </p>
+
+            <form action="/admin/whitelist/channel" method="post" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <input type="text" name="channel_input" placeholder="Enter Channel ID (UC...), @handle (e.g. @Veritasium), or YouTube channel URL" required style="flex: 1 1 350px; min-width: 260px; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px;">
+                <button type="submit" class="pure-button" style="padding: 10px 20px; background: var(--primary, #0b57d0); color: #fff; border-radius: var(--radius-pill, 9999px); border: none; font-weight: 600; font-size: 14px; cursor: pointer;">
+                    <i class="icon ion-ios-add"></i> Whitelist Channel
+                </button>
+            </form>
+            <div style="margin-top: 10px; font-size: 12px; color: var(--text-tertiary);">
+                Supported formats: <code>@handle</code>, <code>https://www.youtube.com/@handle</code>, <code>https://www.youtube.com/channel/UC...</code>, or raw <code>UC...</code> ID.
+            </div>
+        </div>
+
+        <!-- Channels Table -->
+        <div style="background: var(--surface-container, #efecf1); border: 1px solid var(--outline-variant); border-radius: 14px; overflow: hidden;">
+            <div style="padding: 16px 20px; border-bottom: 1px solid var(--divider); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text);">Approved Channels List (<%= channels.size %>)</h3>
+                <input type="text" id="filter-channels" placeholder="Filter channels..." onkeyup="filterTable('channels-table', this.value)" style="padding: 6px 12px; border-radius: var(--radius-pill, 9999px); border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px;">
+            </div>
+
+            <% if channels.empty? %>
+                <div style="text-align: center; padding: 48px 16px; color: var(--text-secondary);">
+                    <i class="icon ion-ios-alert" style="font-size: 40px; color: var(--text-tertiary); display: block; margin-bottom: 12px;"></i>
+                    <p style="font-size: 16px; font-weight: 600; margin: 0 0 6px;">No channels whitelisted yet</p>
+                    <p style="font-size: 13px; margin: 0;">Use the form above to add your first approved YouTube channel.</p>
+                </div>
+            <% else %>
+                <div style="overflow-x: auto;">
+                    <table id="channels-table" class="pure-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+                        <thead>
+                            <tr style="background: var(--surface-container-high, #e8e5ea); border-bottom: 1px solid var(--divider);">
+                                <th style="padding: 12px 16px;">Channel</th>
+                                <th style="padding: 12px 16px;">UCID</th>
+                                <th style="padding: 12px 16px;">Handle</th>
+                                <th style="padding: 12px 16px;">Added On</th>
+                                <th style="padding: 12px 16px; text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% channels.each do |c| %>
+                                <tr style="border-bottom: 1px solid var(--divider);">
+                                    <td style="padding: 12px 16px;">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--surface-container-highest); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--text); overflow: hidden;">
+                                                <%= c.name[0..1].upcase %>
+                                            </div>
+                                            <a href="/channel/<%= c.ucid %>" target="_blank" style="font-weight: 600; color: var(--text); text-decoration: none;">
+                                                <%= HTML.escape(c.name) %>
+                                            </a>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 12px 16px; font-family: monospace; font-size: 12px; color: var(--text-secondary);"><%= c.ucid %></td>
+                                    <td style="padding: 12px 16px; color: var(--text-secondary);"><%= c.handle.empty? ? "—" : HTML.escape(c.handle) %></td>
+                                    <td style="padding: 12px 16px; font-size: 13px; color: var(--text-tertiary);"><%= c.created_at.to_s("%Y-%m-%d %H:%M") %></td>
+                                    <td style="padding: 12px 16px; text-align: right;">
+                                        <div style="display: inline-flex; align-items: center; gap: 8px;">
+                                            <a href="/channel/<%= c.ucid %>" target="_blank" class="pure-button" style="font-size: 12px; padding: 4px 10px; border-radius: 6px; background: var(--surface-container-high); color: var(--text); text-decoration: none;">
+                                                <i class="icon ion-ios-open"></i> Visit
+                                            </a>
+                                            <form action="/admin/whitelist/channel/delete" method="post" style="display: inline;" onsubmit="return confirm('Remove channel \'<%= HTML.escape(c.name) %>\' from whitelist?');">
+                                                <input type="hidden" name="ucid" value="<%= c.ucid %>">
+                                                <button type="submit" class="pure-button" style="font-size: 12px; padding: 4px 10px; border-radius: 6px; background: rgba(229, 57, 53, 0.1); color: #d32f2f; border: 1px solid rgba(229, 57, 53, 0.3); cursor: pointer;">
+                                                    <i class="icon ion-ios-trash"></i> Remove
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% end %>
+                        </tbody>
+                    </table>
+                </div>
+            <% end %>
+        </div>
+
+    <!-- TAB 2: VIDEOS -->
+    <% elsif tab == "videos" %>
+        <!-- Add Video Box -->
+        <div style="background: var(--surface-container-low, #f5f2f7); border: 1px solid var(--outline-variant); border-radius: 14px; padding: 20px; margin-bottom: 24px;">
+            <h3 style="margin: 0 0 8px; font-size: 16px; font-weight: 700; color: var(--text);">
+                <i class="icon ion-ios-videocam" style="color: var(--primary, #0b57d0);"></i> Whitelist Individual Video
+            </h3>
+            <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-secondary);">
+                Permit a specific video without needing to whitelist the creator's entire channel.
+            </p>
+
+            <form action="/admin/whitelist/video" method="post">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
+                    <input type="text" name="video_input" placeholder="Enter Video ID (11 chars, e.g. dQw4w9WgXcQ) or YouTube URL" required style="flex: 1 1 350px; min-width: 260px; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px;">
+                    <button type="submit" class="pure-button" style="padding: 10px 20px; background: var(--primary, #0b57d0); color: #fff; border-radius: var(--radius-pill, 9999px); border: none; font-weight: 600; font-size: 14px; cursor: pointer;">
+                        <i class="icon ion-ios-add"></i> Whitelist Video
+                    </button>
+                </div>
+                <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); cursor: pointer;">
+                    <input type="checkbox" name="also_channel" value="1">
+                    <span>Also whitelist this video's whole channel (recommended if you trust the creator)</span>
+                </label>
+            </form>
+        </div>
+
+        <!-- Videos Table -->
+        <div style="background: var(--surface-container, #efecf1); border: 1px solid var(--outline-variant); border-radius: 14px; overflow: hidden;">
+            <div style="padding: 16px 20px; border-bottom: 1px solid var(--divider); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text);">Whitelisted Specific Videos (<%= videos.size %>)</h3>
+                <input type="text" id="filter-videos" placeholder="Filter videos..." onkeyup="filterTable('videos-table', this.value)" style="padding: 6px 12px; border-radius: var(--radius-pill, 9999px); border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px;">
+            </div>
+
+            <% if videos.empty? %>
+                <div style="text-align: center; padding: 48px 16px; color: var(--text-secondary);">
+                    <i class="icon ion-ios-videocam" style="font-size: 40px; color: var(--text-tertiary); display: block; margin-bottom: 12px;"></i>
+                    <p style="font-size: 16px; font-weight: 600; margin: 0 0 6px;">No individual videos whitelisted yet</p>
+                    <p style="font-size: 13px; margin: 0;">Add individual YouTube videos above, or whitelist entire channels in the Channels tab.</p>
+                </div>
+            <% else %>
+                <div style="overflow-x: auto;">
+                    <table id="videos-table" class="pure-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+                        <thead>
+                            <tr style="background: var(--surface-container-high, #e8e5ea); border-bottom: 1px solid var(--divider);">
+                                <th style="padding: 12px 16px;">Video</th>
+                                <th style="padding: 12px 16px;">ID</th>
+                                <th style="padding: 12px 16px;">Channel</th>
+                                <th style="padding: 12px 16px;">Added On</th>
+                                <th style="padding: 12px 16px; text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% videos.each do |v| %>
+                                <tr style="border-bottom: 1px solid var(--divider);">
+                                    <td style="padding: 12px 16px;">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <% if !v.thumbnail_url.empty? %>
+                                                <img src="<%= v.thumbnail_url %>" style="width: 48px; height: 32px; border-radius: 4px; object-fit: cover;">
+                                            <% end %>
+                                            <a href="/watch?v=<%= v.id %>" target="_blank" style="font-weight: 600; color: var(--text); text-decoration: none; max-width: 320px; display: inline-block; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                                <%= HTML.escape(v.title) %>
+                                            </a>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 12px 16px; font-family: monospace; font-size: 12px; color: var(--text-secondary);"><%= v.id %></td>
+                                    <td style="padding: 12px 16px; color: var(--text-secondary);"><%= HTML.escape(v.author) %></td>
+                                    <td style="padding: 12px 16px; font-size: 13px; color: var(--text-tertiary);"><%= v.created_at.to_s("%Y-%m-%d %H:%M") %></td>
+                                    <td style="padding: 12px 16px; text-align: right;">
+                                        <div style="display: inline-flex; align-items: center; gap: 8px;">
+                                            <a href="/watch?v=<%= v.id %>" target="_blank" class="pure-button" style="font-size: 12px; padding: 4px 10px; border-radius: 6px; background: var(--surface-container-high); color: var(--text); text-decoration: none;">
+                                                <i class="icon ion-ios-play"></i> Watch
+                                            </a>
+                                            <form action="/admin/whitelist/video/delete" method="post" style="display: inline;" onsubmit="return confirm('Remove video \'<%= HTML.escape(v.title) %>\' from whitelist?');">
+                                                <input type="hidden" name="id" value="<%= v.id %>">
+                                                <button type="submit" class="pure-button" style="font-size: 12px; padding: 4px 10px; border-radius: 6px; background: rgba(229, 57, 53, 0.1); color: #d32f2f; border: 1px solid rgba(229, 57, 53, 0.3); cursor: pointer;">
+                                                    <i class="icon ion-ios-trash"></i> Remove
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% end %>
+                        </tbody>
+                    </table>
+                </div>
+            <% end %>
+        </div>
+
+    <!-- TAB 3: SETTINGS -->
+    <% elsif tab == "settings" %>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+            <!-- Policy Toggle -->
+            <div style="background: var(--surface-container, #efecf1); border: 1px solid var(--outline-variant); border-radius: 14px; padding: 22px;">
+                <h3 style="margin: 0 0 12px; font-size: 17px; font-weight: 700; color: var(--text);">
+                    <i class="icon ion-ios-options"></i> Whitelist Enforcement Mode
+                </h3>
+                <p style="margin: 0 0 18px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+                    When enabled, all channels and videos are denied by default. Only items explicitly listed on the whitelist will load. Non-whitelisted videos, search results, and feed items are blocked.
+                </p>
+
+                <form action="/admin/whitelist/toggle_managed" method="post">
+                    <div style="margin-bottom: 18px;">
+                        <label style="display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; color: var(--text); cursor: pointer;">
+                            <input type="checkbox" name="managed_mode" <%= CONFIG.managed_mode ? "checked" : "" %> style="width: 18px; height: 18px;">
+                            <span>Enable Strict Managed Whitelist</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="pure-button" style="padding: 8px 18px; background: var(--primary, #0b57d0); color: #fff; border-radius: var(--radius-pill, 9999px); border: none; font-weight: 600; font-size: 14px; cursor: pointer;">
+                        Save Policy Setting
+                    </button>
+                </form>
+            </div>
+
+            <!-- Export Whitelist -->
+            <div style="background: var(--surface-container, #efecf1); border: 1px solid var(--outline-variant); border-radius: 14px; padding: 22px;">
+                <h3 style="margin: 0 0 12px; font-size: 17px; font-weight: 700; color: var(--text);">
+                    <i class="icon ion-ios-download"></i> Backup / Export Whitelist
+                </h3>
+                <p style="margin: 0 0 18px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+                    Download all whitelisted channels and videos as a standardized JSON backup file.
+                </p>
+                <a href="/admin/whitelist/export" class="pure-button" style="padding: 10px 20px; background: var(--surface-container-highest); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-pill, 9999px); text-decoration: none; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="icon ion-ios-cloud-download"></i> Download Whitelist (JSON)
+                </a>
+            </div>
+
+            <!-- Import Whitelist -->
+            <div style="background: var(--surface-container, #efecf1); border: 1px solid var(--outline-variant); border-radius: 14px; padding: 22px; grid-column: 1 / -1;">
+                <h3 style="margin: 0 0 12px; font-size: 17px; font-weight: 700; color: var(--text);">
+                    <i class="icon ion-ios-cloud-upload"></i> Restore / Import Whitelist
+                </h3>
+                <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+                    Paste a JSON backup to bulk-import channels and videos.
+                </p>
+
+                <form action="/admin/whitelist/import" method="post">
+                    <div style="margin-bottom: 14px;">
+                        <textarea name="whitelist_json" rows="6" placeholder='{"channels": [{"ucid": "UC...", "name": "..."}], "videos": [{"id": "...", "title": "..."}]}' required style="width: 100%; box-sizing: border-box; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: monospace; font-size: 13px;"></textarea>
+                    </div>
+
+                    <div style="margin-bottom: 16px; display: flex; gap: 20px; flex-wrap: wrap;">
+                        <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text); cursor: pointer;">
+                            <input type="radio" name="merge_mode" value="merge" checked>
+                            <span>Merge with existing whitelist</span>
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text); cursor: pointer;">
+                            <input type="radio" name="merge_mode" value="replace">
+                            <span style="color: #d32f2f;">Replace entire whitelist</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="pure-button" style="padding: 10px 20px; background: var(--primary, #0b57d0); color: #fff; border-radius: var(--radius-pill, 9999px); border: none; font-weight: 600; font-size: 14px; cursor: pointer;">
+                        <i class="icon ion-ios-checkmark"></i> Import Whitelist
+                    </button>
+                </form>
+            </div>
+        </div>
+    <% end %>
+</div>
+
+<script>
+function filterTable(tableId, query) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    var rows = table.getElementsByTagName('tr');
+    var q = query.toLowerCase().trim();
+    for (var i = 1; i < rows.length; i++) {
+        var text = rows[i].textContent.toLowerCase();
+        rows[i].style.display = text.indexOf(q) !== -1 ? '' : 'none';
+    }
+}
+</script>

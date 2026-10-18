@@ -12,6 +12,11 @@ module Invidious::Routes::API::V1::Channels
     rescue ex
       return error_json(500, ex)
     end
+
+    if !Invidious::Managed::Whitelist.is_channel_whitelisted?(ucid) && !Invidious::Managed::Admin.is_admin?(env)
+      env.response.status_code = 403
+      return {"error" => "This channel is not on the administrator whitelist."}.to_json
+    end
   end
 
   def self.home(env)

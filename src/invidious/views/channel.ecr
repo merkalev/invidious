@@ -49,6 +49,16 @@
 <title><%= author %> - Invidious</title>
 <% end %>
 
+<% if Invidious::Managed::Admin.is_admin?(env) %>
+    <%
+        admin_bar_ucid = ucid
+        admin_bar_author = channel.author
+        admin_bar_video_id = nil
+        admin_bar_title = nil
+    %>
+    <%= rendered "components/admin_bar" %>
+<% end %>
+
 <%= rendered "components/channel_info" %>
 
 <div class="h-box">

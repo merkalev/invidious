@@ -19,6 +19,8 @@ module Invidious::Database
     Invidious::Database.check_table("session_ids", SessionId)
     Invidious::Database.check_table("users", User)
     Invidious::Database.check_table("videos", Video)
+    Invidious::Database.check_table("whitelisted_channels")
+    Invidious::Database.check_table("whitelisted_videos")
 
     if cfg.cache_annotations
       Invidious::Database.check_table("annotations", Annotation)

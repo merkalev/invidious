@@ -13,6 +13,10 @@ module Invidious::Routes::API::V1::Feeds
       return error_json(500, ex)
     end
 
+    if CONFIG.managed_mode
+      trending.select! { |video| Invidious::Managed::Whitelist.is_item_whitelisted?(video) }
+    end
+
     videos = JSON.build do |json|
       json.array do
         trending.each do |video|
@@ -41,6 +45,10 @@ module Invidious::Routes::API::V1::Feeds
         list = Invidious::Database::ChannelVideos.select_popular_videos.sort_by!(&.published).reverse!
       rescue
       end
+    end
+
+    if CONFIG.managed_mode
+      list.select! { |video| Invidious::Managed::Whitelist.is_item_whitelisted?(video) }
     end
 
     if !list.empty?

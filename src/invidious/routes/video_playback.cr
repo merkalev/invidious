@@ -27,6 +27,12 @@ module Invidious::Routes::VideoPlayback
       return error_template(400, "Invalid \"host\" parameter.")
     end
 
+    if video_id = query_params["id"]?
+      if !Invidious::Managed::Whitelist.is_video_whitelisted?(video_id) && !Invidious::Managed::Admin.is_admin?(env)
+        haltf env, status_code: 403
+      end
+    end
+
     host = "https://#{host}"
     url = "/videoplayback?#{query_params}"
 
@@ -270,6 +276,10 @@ module Invidious::Routes::VideoPlayback
     # Sanity checks
     unless id && validate_video_id(id)
       return error_template(400, InvalidVideoID.new(id))
+    end
+
+    if !Invidious::Managed::Whitelist.is_video_whitelisted?(id) && !Invidious::Managed::Admin.is_admin?(env)
+      return error_template(403, "Access Restricted: This video is not whitelisted by the administrator.")
     end
 
     if !itag.nil? && (itag <= 0 || itag >= 1000)

@@ -137,6 +137,10 @@ class Config
   property registration_enabled : Bool = true
   property statistics_enabled : Bool = false
   property admins : Array(String) = [] of String
+  # Invidious Managed mode: restrict content strictly to whitelisted channels and videos
+  property managed_mode : Bool = true
+  # Master admin password for the admin panel
+  property admin_password : String = "admin"
   property external_port : Int32? = nil
   property default_user_preferences : ConfigPreferences = ConfigPreferences.from_yaml("")
   # For compliance with DMCA, disables download widget using list of video IDs

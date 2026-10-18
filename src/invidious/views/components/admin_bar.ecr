@@ -1,0 +1,95 @@
+<%
+    admin_is_channel_whitelisted = Invidious::Managed::Whitelist.is_channel_whitelisted?(admin_bar_ucid)
+    admin_is_video_whitelisted = admin_bar_video_id ? Invidious::Managed::Whitelist.is_video_whitelisted?(admin_bar_video_id, admin_bar_ucid) : false
+%>
+<div class="h-box" style="margin-bottom: 14px;">
+    <div style="background: var(--surface-container, #efecf1); border: 1px solid var(--primary, #0b57d0); border-radius: 12px; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-size: 13px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--primary, #0b57d0); color: #fff; font-size: 13px;">
+                <i class="icon ion-ios-construct"></i>
+            </span>
+            <strong style="color: var(--text);">Admin Whitelist Controls:</strong>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <!-- Channel Status & Button -->
+            <% if admin_is_channel_whitelisted %>
+                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; background: rgba(46, 125, 50, 0.12); color: #2e7d32; font-weight: 600;">
+                    <i class="icon ion-ios-checkmark-circle"></i> Channel Whitelisted
+                </span>
+                <button type="button" onclick="quickRemoveWhitelist('<%= admin_bar_ucid %>', null)" class="pure-button" style="padding: 4px 10px; border-radius: 6px; font-size: 12px; background: rgba(229, 57, 53, 0.1); color: #d32f2f; border: 1px solid rgba(229, 57, 53, 0.2); cursor: pointer;">
+                    Remove Channel
+                </button>
+            <% else %>
+                <button type="button" onclick="quickAddWhitelist('<%= admin_bar_ucid %>', null, '<%= HTML.escape(admin_bar_author) %>')" class="pure-button" style="padding: 4px 12px; border-radius: 6px; font-size: 12px; background: var(--primary, #0b57d0); color: #fff; border: none; font-weight: 600; cursor: pointer;">
+                    <i class="icon ion-ios-add"></i> Whitelist Channel (<%= HTML.escape(admin_bar_author) %>)
+                </button>
+            <% end %>
+
+            <!-- Video Status & Button (if on watch page) -->
+            <% if admin_bar_video_id %>
+                <% if admin_is_video_whitelisted %>
+                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; background: rgba(46, 125, 50, 0.12); color: #2e7d32; font-weight: 600;">
+                        <i class="icon ion-ios-checkmark-circle"></i> Video Whitelisted
+                    </span>
+                    <button type="button" onclick="quickRemoveWhitelist(null, '<%= admin_bar_video_id %>')" class="pure-button" style="padding: 4px 10px; border-radius: 6px; font-size: 12px; background: rgba(229, 57, 53, 0.1); color: #d32f2f; border: 1px solid rgba(229, 57, 53, 0.2); cursor: pointer;">
+                        Remove Video
+                    </button>
+                <% else %>
+                    <button type="button" onclick="quickAddWhitelist(null, '<%= admin_bar_video_id %>', null, '<%= HTML.escape(admin_bar_title || "") %>')" class="pure-button" style="padding: 4px 12px; border-radius: 6px; font-size: 12px; background: var(--surface-container-highest); color: var(--text); border: 1px solid var(--border); font-weight: 600; cursor: pointer;">
+                        <i class="icon ion-ios-add"></i> Whitelist Only This Video
+                    </button>
+                <% end %>
+            <% end %>
+
+            <a href="/admin" target="_blank" style="color: var(--primary, #0b57d0); text-decoration: none; font-weight: 600; font-size: 12px; margin-left: 6px;">
+                Open Admin Panel <i class="icon ion-ios-open"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function quickAddWhitelist(ucid, video_id, name, title) {
+    var data = new URLSearchParams();
+    if (ucid) data.append('ucid', ucid);
+    if (video_id) data.append('video_id', video_id);
+    if (name) data.append('name', name);
+    if (title) data.append('title', title);
+
+    fetch('/admin/whitelist/quick_add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: data.toString()
+    }).then(function(res) {
+        if (res.ok) {
+            window.location.reload();
+        } else {
+            alert('Failed to whitelist. Please check admin session.');
+        }
+    }).catch(function(err) {
+        alert('Network error: ' + err);
+    });
+}
+
+function quickRemoveWhitelist(ucid, video_id) {
+    if (!confirm('Are you sure you want to remove this from the whitelist?')) return;
+    var data = new URLSearchParams();
+    if (ucid) data.append('ucid', ucid);
+    if (video_id) data.append('video_id', video_id);
+
+    fetch('/admin/whitelist/quick_remove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: data.toString()
+    }).then(function(res) {
+        if (res.ok) {
+            window.location.reload();
+        } else {
+            alert('Failed to remove. Please check admin session.');
+        }
+    }).catch(function(err) {
+        alert('Network error: ' + err);
+    });
+}
+</script>

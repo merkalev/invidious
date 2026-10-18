@@ -54,6 +54,26 @@ module Invidious::Routes::Watch
       return error_template(500, ex)
     end
 
+    is_admin = Invidious::Managed::Admin.is_admin?(env)
+    is_whitelisted = Invidious::Managed::Whitelist.is_video_whitelisted?(video.id, video.ucid)
+
+    if !is_whitelisted && !is_admin
+      env.response.status_code = 403
+      return templated "managed/blocked_video"
+    end
+
+    if CONFIG.managed_mode
+      if related = video.info["relatedVideos"]?.try &.as_a
+        filtered_related = related.select do |rv|
+          h = rv.as_h
+          rv_id = h["id"]?.try(&.as_s) || ""
+          rv_ucid = h["ucid"]?.try(&.as_s) || ""
+          Invidious::Managed::Whitelist.is_video_whitelisted?(rv_id, rv_ucid)
+        end
+        video.info["relatedVideos"] = JSON::Any.new(filtered_related)
+      end
+    end
+
     if preferences.annotations_subscribed &&
        subscriptions.includes?(video.ucid) &&
        (env.params.query["iv_load_policy"]? || "1") == "1"

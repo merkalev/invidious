@@ -76,6 +76,10 @@ module Invidious::Routes::Search
         return error_template(500, ex)
       end
 
+      if CONFIG.managed_mode
+        items.select! { |item| Invidious::Managed::Whitelist.is_item_whitelisted?(item) }
+      end
+
       redirect_url = Invidious::Frontend::Misc.redirect_url(env)
 
       # Pagination

@@ -139,6 +139,14 @@ module Invidious::Routes::Embed
       return error_template(500, ex)
     end
 
+    is_admin = Invidious::Managed::Admin.is_admin?(env)
+    is_whitelisted = Invidious::Managed::Whitelist.is_video_whitelisted?(video.id, video.ucid)
+
+    if !is_whitelisted && !is_admin
+      env.response.status_code = 403
+      return templated "managed/blocked_embed"
+    end
+
     if preferences.annotations_subscribed &&
        subscriptions.includes?(video.ucid) &&
        (env.params.query["iv_load_policy"]? || "1") == "1"

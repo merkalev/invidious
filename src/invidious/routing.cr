@@ -40,6 +40,8 @@ module Invidious::Routing
       if CONFIG.enable_user_notifications
         get "/modify_notifications", Routes::Notifications, :modify
       end
+
+      self.register_admin_routes
     {% end %}
 
     self.register_image_routes
@@ -327,5 +329,22 @@ module Invidious::Routing
       get "/api/v1/mixes/:rdid", {{ namespace }}::Misc, :mixes
       get "/api/v1/resolveurl", {{ namespace }}::Misc, :resolve_url
     {% end %}
+  end
+
+  def register_admin_routes
+    get "/admin", Routes::Admin, :dashboard
+    get "/admin/login", Routes::Admin, :login_page
+    post "/admin/login", Routes::Admin, :login
+    get "/admin/logout", Routes::Admin, :logout
+    post "/admin/whitelist/channel", Routes::Admin, :add_channel
+    post "/admin/whitelist/channel/delete", Routes::Admin, :delete_channel
+    post "/admin/whitelist/video", Routes::Admin, :add_video
+    post "/admin/whitelist/video/delete", Routes::Admin, :delete_video
+    post "/admin/whitelist/toggle_managed", Routes::Admin, :toggle_managed
+    get "/admin/whitelist/export", Routes::Admin, :export_whitelist
+    post "/admin/whitelist/import", Routes::Admin, :import_whitelist
+    post "/admin/whitelist/quick_add", Routes::Admin, :quick_add
+    post "/admin/whitelist/quick_remove", Routes::Admin, :quick_remove
+    get "/channels/approved", Routes::Admin, :approved_channels
   end
 end

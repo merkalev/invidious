@@ -37,7 +37,7 @@
             </button>
             <a href="/" class="index-link">
                 <img class="site-logo" src="/invidious-colored-vector.svg" alt="Invidious logo">
-                Invidious
+                Invidious <span style="font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; background: rgba(11, 87, 208, 0.12); color: var(--primary, #0b57d0); margin-left: 4px; letter-spacing: 0.5px; text-transform: uppercase;">Managed</span>
             </a>
         </div>
 
@@ -50,6 +50,11 @@
         <% end %>
 
         <div class="user-field">
+            <% if Invidious::Managed::Admin.is_admin?(env) %>
+                <a title="Admin Whitelist Panel" href="/admin" class="pure-menu-heading" style="color: var(--primary, #0b57d0) !important;">
+                    <i class="icon ion-ios-shield"></i>
+                </a>
+            <% end %>
             <% if env.get? "user" %>
                 <a id="toggle_theme" href="/toggle_theme?referer=<%= env.get?("current_page") %>" class="pure-menu-heading" title="<%= I18n.translate(locale, "toggle_theme") %>">
                     <% if dark_mode == "dark" %>
@@ -109,6 +114,16 @@
             </div>
 
             <div class="sidebar-section">
+                <a class="feed-menu-item" href="/channels/approved">
+                    <i class="icon ion-ios-checkmark-circle"></i>
+                    <span>Approved Channels</span>
+                </a>
+                <% if Invidious::Managed::Admin.is_admin?(env) %>
+                    <a class="feed-menu-item" href="/admin">
+                        <i class="icon ion-ios-shield"></i>
+                        <span>Admin Whitelist</span>
+                    </a>
+                <% end %>
                 <% if env.get? "user" %>
                     <a class="feed-menu-item" href="/subscription_manager">
                         <i class="icon ion-ios-people"></i>

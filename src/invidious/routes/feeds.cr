@@ -57,6 +57,10 @@ module Invidious::Routes::Feeds
         end
       end
 
+      if CONFIG.managed_mode
+        items.select! { |item| Invidious::Managed::Whitelist.is_item_whitelisted?(item) }
+      end
+
       templated "feeds/popular"
     else
       message = I18n.translate(locale, "The Popular feed has been disabled by the administrator.")
@@ -78,6 +82,10 @@ module Invidious::Routes::Feeds
       trending, plid = fetch_trending(trending_type, region, locale)
     rescue ex
       return error_template(500, ex)
+    end
+
+    if CONFIG.managed_mode
+      trending.select! { |item| Invidious::Managed::Whitelist.is_item_whitelisted?(item) }
     end
 
     templated "feeds/trending"
