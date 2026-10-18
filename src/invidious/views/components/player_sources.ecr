@@ -15,6 +15,6 @@
 <script type="module" src="/videojs/html/video.js?v=<%= ASSET_COMMIT %>"></script>
 <% if (video.hls_manifest_url) && video.live_now && !CONFIG.disabled?("livestreams") %>
     <script type="module" src="/videojs/html/media/hlsjs-video.js?v=<%= ASSET_COMMIT %>"></script>
-<% elsif !params.listen && params.quality == "dash" && !CONFIG.disabled?("dash") %>
+<% elsif !params.listen && !CONFIG.disabled?("dash") && (params.quality == "dash" || invidious_companion || (!audio_streams.empty? && !video_streams.empty?)) %>
     <script type="module" src="/videojs/html/media/dash-video.js?v=<%= ASSET_COMMIT %>"></script>
 <% end %>

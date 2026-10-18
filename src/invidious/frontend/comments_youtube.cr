@@ -5,6 +5,7 @@ module Invidious::Frontend::Comments
     String.build do |html|
       root = comments["comments"].as_a
       root.each do |child|
+        replies_html = ""
         if child["replies"]?
           replies_count_text = I18n.translate_count(locale,
             "comments_view_x_replies",
@@ -13,12 +14,14 @@ module Invidious::Frontend::Comments
           )
 
           replies_html = <<-END_HTML
-            <div id="replies" class="pure-g">
-              <div class="pure-u-1-24"></div>
-              <div class="pure-u-23-24">
-                <p>
-                  <a href="javascript:void(0)" data-continuation="#{child["replies"]["continuation"]}"
-                    data-onclick="get_youtube_replies" data-load-replies>#{replies_count_text}</a>
+            <div id="replies" class="yt-comment-replies">
+              <div class="yt-replies-trigger-wrap">
+                <p class="yt-replies-p">
+                  <a class="yt-replies-btn" href="javascript:void(0)" data-continuation="#{child["replies"]["continuation"]}"
+                    data-onclick="get_youtube_replies" data-load-replies>
+                    <i class="icon ion-ios-arrow-down"></i>
+                    <span>#{replies_count_text}</span>
+                  </a>
                 </p>
               </div>
             </div>
@@ -32,11 +35,13 @@ module Invidious::Frontend::Comments
           )
 
           replies_html = <<-END_HTML
-            <div class="pure-g">
-              <div class="pure-u-1-24"></div>
-              <div class="pure-u-23-24">
-                <p>
-                  <a href="/post/#{child["commentId"]}?ucid=#{comments["authorId"]}">#{replies_count_text}</a>
+            <div class="yt-comment-replies">
+              <div class="yt-replies-trigger-wrap">
+                <p class="yt-replies-p">
+                  <a class="yt-replies-btn" href="/post/#{child["commentId"]}?ucid=#{comments["authorId"]}">
+                    <i class="icon ion-ios-chatbubbles"></i>
+                    <span>#{replies_count_text}</span>
+                  </a>
                 </p>
               </div>
             </div>
@@ -46,41 +51,93 @@ module Invidious::Frontend::Comments
         if !thin_mode
           if child_author_thumbnail = child["authorThumbnail"]?.try &.as_s
             author_thumbnail = "/ggpht#{URI.parse(child_author_thumbnail).request_target}"
-          else
+          elsif child["authorThumbnails"]?.try { |t| !t.as_a.empty? }
             author_thumbnail = "/ggpht#{URI.parse(child["authorThumbnails"][-1]["url"].as_s).request_target}"
+          else
+            author_thumbnail = ""
           end
         else
           author_thumbnail = ""
         end
 
-        author_name = HTML.escape(child["author"].as_s)
-        sponsor_icon = ""
-        if child["verified"]?.try &.as_bool && child["authorIsChannelOwner"]?.try &.as_bool
-          author_name += "&nbsp;<i class=\"icon ion ion-md-checkmark-circle\"></i>"
-        elsif child["verified"]?.try &.as_bool
-          author_name += "&nbsp;<i class=\"icon ion ion-md-checkmark\"></i>"
+        raw_author = child["author"]?.try(&.as_s?) || ""
+        author_name = HTML.escape(raw_author)
+        author_initial = raw_author.lstrip('@')[0]?.try(&.upcase.to_s) || "?"
+        is_owner = child["authorIsChannelOwner"]?.try(&.as_bool?) == true
+        is_verified = child["verified"]?.try(&.as_bool?) == true
+        is_pinned = child["isPinned"]?.try(&.as_bool?) == true
+
+        verified_badge = ""
+        if is_verified
+          verified_badge = %(<i class="icon ion-md-checkmark-circle yt-comment-verified" title="#{I18n.translate(locale, "Verified")}"></i>)
         end
 
+        sponsor_icon = ""
         if child["isSponsor"]?.try &.as_bool
           sponsor_icon = String.build do |str|
-            str << %(<img alt="" )
+            str << %(<img class="yt-comment-sponsor-badge" alt="" )
             str << %(src="/ggpht) << URI.parse(child["sponsorIconUrl"].as_s).request_target << "\" "
             str << %(title=") << I18n.translate(locale, "Channel Sponsor") << "\" "
             str << %(width="16" height="16" />)
           end
         end
-        html << <<-END_HTML
-          <div class="pure-g" style="width:100%">
-            <div class="channel-profile pure-u-4-24 pure-u-md-2-24">
-              <img loading="lazy" style="margin-right:1em;margin-top:1em;width:90%" src="#{author_thumbnail}" alt="" />
+
+        pinned_html = ""
+        if is_pinned
+          pinned_html = <<-END_HTML
+            <div class="yt-comment-pinned">
+              <i class="icon ion-md-pin"></i>
+              <span>#{I18n.translate(locale, "Pinned")}</span>
             </div>
-            <div class="pure-u-20-24 pure-u-md-22-24">
-              <p>
-                <b>
-                  <a class="#{child["authorIsChannelOwner"] == true ? "channel-owner" : ""}" href="#{child["authorUrl"]}">#{author_name}</a>
-                </b>
+            END_HTML
+        end
+
+        published_unix = child["published"]?.try(&.as_i64?) || 0_i64
+        published_tooltip = Time.unix(published_unix).to_s(I18n.translate(locale, "%A %B %-d, %Y"))
+        published_ago = I18n.translate(locale, "`x` ago", recode_date(Time.unix(published_unix), locale))
+        edited_suffix = child["isEdited"]?.try(&.as_bool?) == true ? " " + I18n.translate(locale, "(edited)") : ""
+
+        permalink_html = ""
+        if comments["videoId"]?
+          permalink_html = <<-END_HTML
+            <a class="yt-comment-permalink" rel="noreferrer noopener" target="_blank" href="https://www.youtube.com/watch?v=#{comments["videoId"]}&lc=#{child["commentId"]}" title="#{I18n.translate(locale, "YouTube comment permalink")}">
+              <i class="icon ion-logo-youtube"></i>
+            </a>
+            END_HTML
+        elsif comments["authorId"]?
+          permalink_html = <<-END_HTML
+            <a class="yt-comment-permalink" rel="noreferrer noopener" target="_blank" href="https://www.youtube.com/channel/#{comments["authorId"]}/community?lb=#{child["commentId"]}" title="#{I18n.translate(locale, "YouTube comment permalink")}">
+              <i class="icon ion-logo-youtube"></i>
+            </a>
+            END_HTML
+        end
+
+        avatar_html = if !author_thumbnail.empty?
+                        %(<img loading="lazy" class="yt-comment-avatar" src="#{author_thumbnail}" alt="#{author_name}" />)
+                      else
+                        %(<span class="yt-comment-avatar yt-comment-avatar-fallback">#{HTML.escape(author_initial)}</span>)
+                      end
+
+        author_url = child["authorUrl"]?.try(&.as_s?) || "#"
+
+        html << <<-END_HTML
+          <div class="yt-comment-thread #{is_replies ? "yt-comment-reply-item" : ""}">
+            <div class="yt-comment-avatar-col">
+              <a class="yt-comment-avatar-link" href="#{author_url}" tabindex="-1">
+                #{avatar_html}
+              </a>
+            </div>
+            <div class="yt-comment-main">
+              #{pinned_html}
+              <div class="yt-comment-header">
+                <a class="yt-comment-author #{is_owner ? "channel-owner yt-comment-owner-pill" : ""}" href="#{author_url}">
+                  <span>#{author_name}</span>#{verified_badge}
+                </a>
                 #{sponsor_icon}
-                <p style="white-space:pre-wrap">#{child["contentHtml"]}</p>
+                <span class="yt-comment-time" title="#{published_tooltip}">#{published_ago}#{edited_suffix}</span>
+                #{permalink_html}
+              </div>
+              <div class="yt-comment-body">#{child["contentHtml"]}</div>
           END_HTML
 
         if child["attachment"]?
@@ -91,10 +148,8 @@ module Invidious::Frontend::Comments
             attachment = attachment["imageThumbnails"][1]
 
             html << <<-END_HTML
-              <div class="pure-g">
-                <div class="pure-u-1 pure-u-md-1-2">
-                  <img loading="lazy" style="width:100%" src="/ggpht#{URI.parse(attachment["url"].as_s).request_target}" alt="" />
-                </div>
+              <div class="yt-comment-attachment">
+                <img loading="lazy" class="yt-comment-attachment-img" src="/ggpht#{URI.parse(attachment["url"].as_s).request_target}" alt="" />
               </div>
               END_HTML
           when "video"
@@ -144,26 +199,15 @@ module Invidious::Frontend::Comments
           end
         end
 
-        html << <<-END_HTML
-          <p>
-            <span title="#{Time.unix(child["published"].as_i64).to_s(I18n.translate(locale, "%A %B %-d, %Y"))}">#{I18n.translate(locale, "`x` ago", recode_date(Time.unix(child["published"].as_i64), locale))} #{child["isEdited"] == true ? I18n.translate(locale, "(edited)") : ""}</span>
-            |
-          END_HTML
-
-        if comments["videoId"]?
-          html << <<-END_HTML
-            <a rel="noreferrer noopener" href="https://www.youtube.com/watch?v=#{comments["videoId"]}&lc=#{child["commentId"]}" title="#{I18n.translate(locale, "YouTube comment permalink")}">[YT]</a>
-            |
-            END_HTML
-        elsif comments["authorId"]?
-          html << <<-END_HTML
-            <a rel="noreferrer noopener" href="https://www.youtube.com/channel/#{comments["authorId"]}/community?lb=#{child["commentId"]}" title="#{I18n.translate(locale, "YouTube comment permalink")}">[YT]</a>
-            |
-            END_HTML
-        end
+        like_count_val = child["likeCount"]?.try(&.as_i64?) || 0_i64
+        like_count_str = like_count_val > 0 ? number_with_separator(child["likeCount"]) : ""
 
         html << <<-END_HTML
-          <i class="icon ion-ios-thumbs-up"></i> #{number_with_separator(child["likeCount"])}
+          <div class="yt-comment-actions">
+            <span class="yt-comment-like-pill" title="#{I18n.translate(locale, "Likes")}">
+              <i class="icon ion-md-thumbs-up"></i>
+              #{!like_count_str.empty? ? "<span class=\"yt-comment-like-count\">#{like_count_str}</span>" : ""}
+            </span>
           END_HTML
 
         if child["creatorHeart"]?
@@ -174,20 +218,19 @@ module Invidious::Frontend::Comments
           end
 
           html << <<-END_HTML
-            &nbsp;
             <span class="creator-heart-container" title="#{I18n.translate(locale, "`x` marked it with a ❤", child["creatorHeart"]["creatorName"].as_s)}">
-                <span class="creator-heart">
-                    <img loading="lazy" class="creator-heart-background-hearted" src="#{creator_thumbnail}" alt="" />
-                    <span class="creator-heart-small-hearted">
-                        <span class="icon ion-ios-heart creator-heart-small-container"></span>
-                    </span>
+              <span class="creator-heart">
+                <img loading="lazy" class="creator-heart-background-hearted" src="#{creator_thumbnail}" alt="" />
+                <span class="creator-heart-small-hearted">
+                  <span class="icon ion-ios-heart creator-heart-small-container"></span>
                 </span>
+              </span>
             </span>
             END_HTML
         end
 
         html << <<-END_HTML
-              </p>
+              </div>
               #{replies_html}
             </div>
           </div>
@@ -196,11 +239,14 @@ module Invidious::Frontend::Comments
 
       if comments["continuation"]?
         html << <<-END_HTML
-          <div class="pure-g">
-            <div class="pure-u-1">
+          <div class="yt-load-more-row">
+            <div class="yt-load-more-inner">
               <p>
-                <a href="javascript:void(0)" data-continuation="#{comments["continuation"]}"
-                  data-onclick="get_youtube_replies" data-load-more #{"data-load-replies" if is_replies}>#{I18n.translate(locale, "Load more")}</a>
+                <a class="yt-load-more-btn" href="javascript:void(0)" data-continuation="#{comments["continuation"]}"
+                  data-onclick="get_youtube_replies" data-load-more #{"data-load-replies" if is_replies}>
+                  <i class="icon ion-md-add"></i>
+                  <span>#{I18n.translate(locale, "Load more")}</span>
+                </a>
               </p>
             </div>
           </div>

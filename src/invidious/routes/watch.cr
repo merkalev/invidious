@@ -128,7 +128,7 @@ module Invidious::Routes::Watch
     if video.premiere_timestamp.nil?
       # Older videos may not have audio sources available.
       # We redirect here so they're not unplayable
-      if audio_streams.empty? && !video.live_now
+      if audio_streams.empty? && !video.live_now && CONFIG.invidious_companion.empty?
         if params.quality == "dash"
           env.params.query.delete_all("quality")
           env.params.query["quality"] = "medium"

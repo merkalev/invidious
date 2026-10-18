@@ -14,33 +14,21 @@ module Invidious::Frontend::Comments
             replies_html = self.template_reddit(replies.data.as(RedditListing).children, locale)
           end
 
-          if child.depth > 0
-            html << <<-END_HTML
-              <div class="pure-g">
-              <div class="pure-u-1-24">
-              </div>
-              <div class="pure-u-23-24">
-              END_HTML
-          else
-            html << <<-END_HTML
-              <div class="pure-g">
-              <div class="pure-u-1">
-              END_HTML
-          end
-
           html << <<-END_HTML
-            <p>
-              <a href="javascript:void(0)" data-onclick="toggle_parent">[ − ]</a>
-              <b><a href="https://www.reddit.com/user/#{child.author}">#{child.author}</a></b>
-              #{I18n.translate_count(locale, "comments_points_count", child.score, I18n::NumberFormatting::Separator)}
-              <span title="#{child.created_utc.to_s("%a %B %-d %T %Y UTC")}">#{I18n.translate(locale, "`x` ago", recode_date(child.created_utc, locale))}</span>
-              <a href="https://www.reddit.com#{child.permalink}" title="#{I18n.translate(locale, "permalink")}">#{I18n.translate(locale, "permalink")}</a>
-              </p>
-              <div>
-              #{body_html}
-              #{replies_html}
-            </div>
-            </div>
+            <div class="yt-reddit-comment #{child.depth > 0 ? "yt-reddit-reply" : ""}">
+              <div class="yt-reddit-comment-inner">
+                <p class="yt-comment-header">
+                  <a class="yt-reddit-collapse" href="javascript:void(0)" data-onclick="toggle_parent">[ − ]</a>
+                  <a class="yt-comment-author" href="https://www.reddit.com/user/#{child.author}">u/#{child.author}</a>
+                  <span class="yt-reddit-points">#{I18n.translate_count(locale, "comments_points_count", child.score, I18n::NumberFormatting::Separator)}</span>
+                  <span class="yt-comment-time" title="#{child.created_utc.to_s("%a %B %-d %T %Y UTC")}">#{I18n.translate(locale, "`x` ago", recode_date(child.created_utc, locale))}</span>
+                  <a class="yt-comment-permalink" href="https://www.reddit.com#{child.permalink}" title="#{I18n.translate(locale, "permalink")}">#{I18n.translate(locale, "permalink")}</a>
+                </p>
+                <div class="yt-comment-body">
+                  #{body_html}
+                  #{replies_html}
+                </div>
+              </div>
             </div>
             END_HTML
         end

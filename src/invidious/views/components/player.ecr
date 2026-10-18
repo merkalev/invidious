@@ -22,23 +22,23 @@
     # (hd720/medium/small) to initial DASH target resolutions.
     dash_url : String? = nil
     effective_quality_dash = params.quality_dash
-    if !is_live && !params.listen && !CONFIG.disabled?("dash") && (params.quality == "dash" || (!audio_streams.empty? && !video_streams.empty?))
+    if !is_live && !params.listen && !CONFIG.disabled?("dash") && (params.quality == "dash" || invidious_companion || (!audio_streams.empty? && !video_streams.empty?))
         dash_url = "/api/manifest/dash/id/#{video.id}?local=true&unique_res=1"
         dash_url = invidious_companion.public_url.to_s + dash_url +
                     "&check=#{invidious_companion_check_id}" if invidious_companion
         if params.quality != "dash"
             effective_quality_dash = case params.quality
-                                     when "hd720"  then "720p"
-                                     when "medium" then "360p"
-                                     when "small"  then "240p"
-                                     else               params.quality_dash
+                                     when "hd720", "high" then "720p"
+                                     when "medium"        then "360p"
+                                     when "small"         then "240p"
+                                     else                      params.quality_dash
                                      end
         end
     end
 
     # Build progressive fallback sources in case DASH fails or is disabled
-    fmt_stream.reject! { |f| f["itag"] == 17 }
-    fmt_stream.sort_by! { |f| params.quality == f["quality"] ? 0 : 1 }
+    fmt_stream.reject! { |f| f["itag"]?.try(&.as_i?) == 17 }
+    fmt_stream.sort_by! { |f| f["quality"]?.try(&.as_s?) == params.quality ? 0 : 1 }
     fallback_sources = fmt_stream.map do |fmt|
         f_url = "/latest_version?id=#{video.id}&itag=#{fmt["itag"]}"
         f_url += "&local=true" if params.local || invidious_companion
@@ -47,7 +47,15 @@
         {
             "src"   => f_url,
             "type"  => fmt["mimeType"].as_s,
-            "label" => fmt["quality"]?.try(&.as_s) || fmt["qualityLabel"]?.try(&.as_s) || "360p",
+            "label" => fmt["quality"]?.try(&.as_s?) || fmt["qualityLabel"]?.try(&.as_s?) || "360p",
+        }
+    end
+    if fallback_sources.empty? && invidious_companion
+        f_url = "#{invidious_companion.public_url}/latest_version?id=#{video.id}&itag=18&local=true&check=#{invidious_companion_check_id}"
+        fallback_sources << {
+            "src"   => f_url,
+            "type"  => "video/mp4",
+            "label" => "medium",
         }
     end
 
@@ -120,7 +128,7 @@
                            src_url = invidious_companion.public_url.to_s + src_url +
                                        "&check=#{invidious_companion_check_id}" if (invidious_companion)
                         %>
-                        <source src="<%= src_url %>" type="<%= HTML.escape(fmt["mimeType"].as_s) %>" label="<%= fmt["quality"] %>" <% if params.quality ? (params.quality == fmt["quality"]) : (i == 0) %>selected<% end %>>
+                        <source src="<%= src_url %>" type="<%= HTML.escape(fmt["mimeType"].as_s) %>" label="<%= fmt["quality"] %>" <% if params.quality ? (fmt["quality"]?.try(&.as_s?) == params.quality) : (i == 0) %>selected<% end %>>
                     <% end %>
                     <% if storyboard_url %>
                     <track kind="metadata" label="thumbnails" src="<%= storyboard_url %>" default>

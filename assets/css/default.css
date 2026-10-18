@@ -2698,3 +2698,428 @@ h1, h2, h3, h4, h5, p,
     margin: 4px 16px 16px 16px;
 }
 
+/*
+ * YouTube-Style Comments Section
+ */
+#comments {
+    margin-top: 24px;
+    padding-bottom: 32px;
+}
+
+.yt-comments-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--divider);
+}
+
+.yt-comments-header-left {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.yt-comments-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 28px;
+    color: var(--text);
+    letter-spacing: -0.01em;
+}
+
+.yt-comments-sort-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.yt-sort-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--radius-pill, 9999px);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.yt-sort-pill:hover {
+    background-color: var(--surface-container-high);
+    color: var(--text);
+}
+
+.yt-sort-pill.yt-sort-pill-active {
+    background-color: var(--surface-container-high);
+    color: var(--text);
+    font-weight: 600;
+}
+
+.yt-comments-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.yt-comments-chip,
+a.yt-comments-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: var(--radius-pill, 9999px);
+    background-color: var(--surface-container-high);
+    color: var(--text) !important;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid var(--outline-variant);
+    text-decoration: none !important;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.yt-comments-chip:hover,
+a.yt-comments-chip:hover {
+    background-color: var(--surface-container-highest);
+}
+
+.yt-comments-collapse-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.yt-comments-collapse-btn:hover {
+    background-color: var(--surface-container-high);
+    color: var(--text);
+}
+
+.yt-comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.yt-comment-thread {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    width: 100%;
+}
+
+.yt-comment-thread.yt-comment-reply-item {
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.yt-comment-avatar-col {
+    flex-shrink: 0;
+}
+
+.yt-comment-avatar-link {
+    display: block;
+    text-decoration: none !important;
+}
+
+.yt-comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    background-color: var(--surface-container-high);
+}
+
+.yt-comment-reply-item .yt-comment-avatar {
+    width: 24px;
+    height: 24px;
+}
+
+.yt-comment-avatar-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    background-color: var(--surface-container-highest);
+}
+
+.yt-comment-reply-item .yt-comment-avatar-fallback {
+    font-size: 11px;
+}
+
+.yt-comment-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.yt-comment-pinned {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.yt-comment-pinned i.icon {
+    font-size: 13px;
+}
+
+.yt-comment-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 4px 0;
+    line-height: 18px;
+}
+
+a.yt-comment-author {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text) !important;
+    text-decoration: none !important;
+    line-height: 18px;
+}
+
+a.yt-comment-author:hover {
+    text-decoration: underline !important;
+}
+
+a.yt-comment-author.yt-comment-owner-pill {
+    background-color: var(--surface-container-highest);
+    color: var(--text) !important;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.yt-comment-verified {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-left: 2px;
+}
+
+.yt-comment-sponsor-badge {
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+    border-radius: 2px;
+}
+
+.yt-comment-time {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+a.yt-comment-permalink {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-secondary) !important;
+    font-size: 12px;
+    opacity: 0.65;
+    margin-left: 2px;
+    text-decoration: none !important;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+a.yt-comment-permalink:hover {
+    opacity: 1;
+    color: var(--text) !important;
+}
+
+.yt-comment-body {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 2px 0 6px 0;
+}
+
+.yt-comment-body p {
+    margin: 0 0 6px 0;
+}
+
+.yt-comment-body p:last-child {
+    margin-bottom: 0;
+}
+
+.yt-comment-attachment {
+    margin: 8px 0;
+    max-width: 420px;
+}
+
+.yt-comment-attachment-img {
+    width: 100%;
+    border-radius: 12px;
+    display: block;
+}
+
+.yt-comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+    min-height: 28px;
+}
+
+.yt-comment-like-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 8px 4px 0;
+    border-radius: var(--radius-pill, 9999px);
+}
+
+.yt-comment-like-pill i.icon {
+    font-size: 15px;
+    color: var(--text);
+    opacity: 0.85;
+}
+
+.yt-comment-like-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.yt-comment-replies {
+    margin-top: 4px;
+}
+
+.yt-replies-p {
+    margin: 2px 0;
+}
+
+a.yt-replies-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    margin-left: -10px;
+    border-radius: var(--radius-pill, 9999px);
+    color: #3ea6ff !important;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 18px;
+    text-decoration: none !important;
+    transition: background-color 0.15s ease;
+}
+
+body.light-theme a.yt-replies-btn {
+    color: #065fd4 !important;
+}
+
+a.yt-replies-btn:hover {
+    background-color: rgba(62, 166, 255, 0.15);
+}
+
+body.light-theme a.yt-replies-btn:hover {
+    background-color: rgba(6, 95, 212, 0.1);
+}
+
+a.yt-replies-btn i.icon {
+    font-size: 14px;
+}
+
+.yt-replies-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 6px;
+}
+
+.yt-load-more-row {
+    margin-top: 12px;
+}
+
+.yt-load-more-inner p {
+    margin: 0;
+}
+
+a.yt-load-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    border-radius: var(--radius-pill, 9999px);
+    background-color: var(--surface-container-high);
+    border: 1px solid var(--outline-variant);
+    color: var(--text) !important;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: background-color 0.15s ease;
+}
+
+a.yt-load-more-btn:hover {
+    background-color: var(--surface-container-highest);
+}
+
+.yt-comments-loading {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+}
+
+.yt-comments-disabled-card {
+    padding: 20px;
+    border-radius: var(--radius-card, 12px);
+    background-color: var(--surface-container);
+    border: 1px solid var(--outline-variant);
+    text-align: center;
+}
+
+/* Reddit comments styling */
+.yt-reddit-comment {
+    padding: 10px 0 4px 0;
+}
+
+.yt-reddit-comment.yt-reddit-reply {
+    margin-left: 18px;
+    padding-left: 14px;
+    border-left: 2px solid var(--outline-variant);
+}
+
+.yt-reddit-points {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+a.yt-reddit-collapse {
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--text-secondary) !important;
+    text-decoration: none !important;
+}
+
+

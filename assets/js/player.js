@@ -265,62 +265,53 @@ if ((is_dash || is_live) && !video_data.params.listen) {
             player.videoTracks.addEventListener('addtrack', updateQualityBadge);
             player.videoTracks.addEventListener('change', updateQualityBadge);
         }
-        if (is_dash && player.engine && typeof player.engine.on === 'function') {
-            player.engine.on('streamInitialized', function () { setTimeout(updateQualityBadge, 50); });
-            player.engine.on('qualityChangeRendered', function () { setTimeout(updateQualityBadge, 50); });
-        }
-
         var initialPickInProgress = false;
-        if (!targetDashQuality || targetDashQuality === 'auto') return;
+        var applied = false;
 
-        if (!host || !host.store) return;
-        var store = host.store;
-
-        function findQualityState(state) {
-            if (!state) return null;
-            if (state.videoRenditionList && typeof state.selectVideoRendition === 'function') {
-                return state;
-            }
-            var holder = state.quality || state.qualityData || null;
-            if (holder && holder.videoRenditionList) return holder;
-            for (var key in state) {
-                var value = state[key];
-                if (value && typeof value === 'object' && value.videoRenditionList)
-                    return value;
-            }
-            return null;
-        }
-
-        function pickRendition(qualityState) {
-            var list = (qualityState.videoRenditionList || []).slice();
-            if (list.length === 0) return false;
-            var wanted = targetDashQuality;
-            list.sort(function (a, b) {
-                var ha = a.height || Math.sqrt(a.width || 0) * 9 / 16;
-                var hb = b.height || Math.sqrt(b.width || 0) * 9 / 16;
-                return ha - hb || (a.bitrate || 0) - (b.bitrate || 0);
-            });
-            initialPickInProgress = true;
+        function applyInitialQuality() {
+            if (applied || !player.videoRenditions) return;
+            /* Refresh Video.js 10 quality store after all rendition IDs are assigned */
             try {
-                if (wanted === 'best') {
-                    qualityState.selectVideoRendition(list[list.length - 1].id);
-                    return true;
-                } else if (wanted === 'worst') {
-                    qualityState.selectVideoRendition(list[0].id);
-                    return true;
-                } else {
-                    var targetHeight = parseInt(wanted, 10);
-                    if (!targetHeight) return false;
-                    var best;
-                    list.forEach(function (rendition) {
-                        var height = rendition.height || Math.sqrt(rendition.width || 0) * 9 / 16;
-                        if (height <= targetHeight) best = rendition.id;
-                    });
-                    if (best === undefined) best = list[0].id;
-                    qualityState.selectVideoRendition(best);
-                    return true;
-                }
-            } finally {
+                player.videoRenditions.dispatchEvent(new Event('activechange'));
+            } catch (e) { /* noop */ }
+
+            if (!targetDashQuality || targetDashQuality === 'auto') {
+                applied = true;
+                updateQualityBadge();
+                return;
+            }
+
+            var rawList = Array.from(player.videoRenditions);
+            if (rawList.length === 0) return;
+
+            var indexed = rawList.map(function (r, idx) {
+                var h = r.height || Math.round(Math.sqrt(r.width || 0) * 9 / 16) || 0;
+                return { index: idx, height: h, bitrate: r.bitrate || 0, id: r.id };
+            });
+            indexed.sort(function (a, b) {
+                return a.height - b.height || a.bitrate - b.bitrate;
+            });
+
+            var chosenIndex = -1;
+            if (targetDashQuality === 'best') {
+                chosenIndex = indexed[indexed.length - 1].index;
+            } else if (targetDashQuality === 'worst') {
+                chosenIndex = indexed[0].index;
+            } else {
+                var targetHeight = parseInt(targetDashQuality, 10);
+                if (!targetHeight) return;
+                indexed.forEach(function (item) {
+                    if (item.height <= targetHeight) chosenIndex = item.index;
+                });
+                if (chosenIndex === -1) chosenIndex = indexed[0].index;
+            }
+
+            if (chosenIndex !== -1) {
+                applied = true;
+                initialPickInProgress = true;
+                try {
+                    player.videoRenditions.selectedIndex = chosenIndex;
+                } catch (e) { /* noop */ }
                 setTimeout(function () {
                     initialPickInProgress = false;
                     updateQualityBadge();
@@ -328,18 +319,24 @@ if ((is_dash || is_live) && !video_data.params.listen) {
             }
         }
 
-        var applied = false;
-        var unsub = store.subscribe(function () {
-            var state = findQualityState(store.state);
-            if (!state || applied) return;
-            try {
-                if (pickRendition(state)) {
-                    applied = true;
-                    if (unsub) unsub();
-                }
-            } catch (e) { /* noop */ }
-        });
-        if (unsub) setTimeout(unsub, 20000);
+        if (is_dash && player.engine && typeof player.engine.on === 'function') {
+            player.engine.on('streamInitialized', function () {
+                setTimeout(function () {
+                    applyInitialQuality();
+                    updateQualityBadge();
+                }, 20);
+            });
+            player.engine.on('qualityChangeRendered', function () {
+                setTimeout(updateQualityBadge, 50);
+            });
+        } else if (player.videoRenditions && typeof player.videoRenditions.addEventListener === 'function') {
+            var addTimer = null;
+            player.videoRenditions.addEventListener('addrendition', function () {
+                if (applied) return;
+                clearTimeout(addTimer);
+                addTimer = setTimeout(applyInitialQuality, 50);
+            });
+        }
     });
 }
 

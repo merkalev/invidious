@@ -338,10 +338,8 @@ module Invidious::Routes::API::V1::Videos
     format ||= "json"
 
     action = env.params.query["action"]?
-    # 2026-09-14 TODO: Check if action is or can be used somewhere
-    # as is unused currently, but for some reason is it here.
-    # ameba:disable Lint/UselessAssign
     action ||= "action_get_comments"
+    is_replies = action == "action_get_comment_replies"
 
     continuation = env.params.query["continuation"]?
     sort_by = env.params.query["sort_by"]?.try &.downcase
@@ -350,7 +348,7 @@ module Invidious::Routes::API::V1::Videos
       sort_by ||= "top"
 
       begin
-        comments = Comments.fetch_youtube(id, continuation, format, locale, thin_mode, region, sort_by: sort_by)
+        comments = Comments.fetch_youtube(id, continuation, format, locale, thin_mode, region, sort_by: sort_by, is_replies: is_replies)
       rescue ex : NotFoundException
         return error_json(404, ex)
       rescue ex

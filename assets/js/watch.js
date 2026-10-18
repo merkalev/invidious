@@ -12,7 +12,8 @@ function toggle_parent(target) {
 }
 
 function swap_comments(event) {
-    var source = event.target.getAttribute('data-comments');
+    var target = event.currentTarget || (event.target.closest && event.target.closest('[data-comments]')) || event.target;
+    var source = target.getAttribute('data-comments');
 
     if (source === 'youtube') {
         get_youtube_comments();
@@ -127,25 +128,25 @@ function get_reddit_comments() {
 
     helpers.xhr('GET', url, {retries: 5, entity_name: ''}, {
         on200: function (response) {
-            comments.innerHTML = ' \
-            <div> \
-                <h3> \
-                    <a href="javascript:void(0)">[ − ]</a> \
-                    {title} \
-                </h3> \
-                <p> \
-                    <b> \
-                        <a href="javascript:void(0)" data-comments="youtube"> \
-                            {youtubeCommentsText} \
-                        </a> \
-                    </b> \
-                </p> \
-                <b> \
-                    <a rel="noopener noreferrer" target="_blank" href="https://reddit.com{permalink}">{redditPermalinkText}</a> \
-                </b> \
-            </div> \
-            <div>{contentHtml}</div> \
-            <hr>'.supplant({
+            comments.innerHTML = (
+                '<div class="yt-comments-header">' +
+                    '<div class="yt-comments-header-left">' +
+                        '<h2 class="yt-comments-title">{title}</h2>' +
+                    '</div>' +
+                    '<div class="yt-comments-header-right">' +
+                        '<a class="yt-comments-chip" href="javascript:void(0)" data-comments="youtube">' +
+                            '<i class="icon ion-logo-youtube"></i><span>{youtubeCommentsText}</span>' +
+                        '</a>' +
+                        '<a class="yt-comments-chip" rel="noopener noreferrer" target="_blank" href="https://reddit.com{permalink}">' +
+                            '<i class="icon ion-md-open"></i><span>{redditPermalinkText}</span>' +
+                        '</a>' +
+                        '<button type="button" class="yt-comments-collapse-btn" title="Toggle comments">' +
+                            '<i class="icon ion-ios-arrow-up"></i>' +
+                        '</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="yt-comments-list">{contentHtml}</div>'
+            ).supplant({
                 title: response.title,
                 youtubeCommentsText: video_data.youtube_comments_text,
                 redditPermalinkText: video_data.reddit_permalink_text,
@@ -153,8 +154,10 @@ function get_reddit_comments() {
                 contentHtml: response.contentHtml
             });
 
-            comments.children[0].children[0].children[0].onclick = toggle_comments;
-            comments.children[0].children[1].children[0].onclick = swap_comments;
+            var collapseBtn = comments.querySelector('.yt-comments-collapse-btn');
+            if (collapseBtn) collapseBtn.onclick = toggle_comments;
+            var ytBtn = comments.querySelector('[data-comments="youtube"]');
+            if (ytBtn) ytBtn.onclick = swap_comments;
         },
         onNon200: onNon200, // declared above
     });
