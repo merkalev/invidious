@@ -145,8 +145,13 @@ whenPlayerReady(function () {
                     }
                 }
             };
+        } else if (is_live) {
+            sourceConfig.streamType = 'live';
         }
         player.source = sourceConfig;
+        if (is_live && !player.src) {
+            try { player.src = player_data.hls_url; } catch (e) {}
+        }
 
         /* Fallback to progressive <video> stream if DASH manifest fails to load/parse */
         if (is_dash && player.engine && typeof player.engine.on === 'function' &&
@@ -529,7 +534,7 @@ if (video_data.params.save_player_pos && typeof helpers !== 'undefined') {
     /* Restored on first metadata load so it also applies to the streaming
      * engines, whose source is assigned through the custom element API. */
     player.addEventListener('loadedmetadata', function () {
-        if (positionRestored || hasTimeParam || video_data.length_seconds <= 0) return;
+        if (positionRestored || hasTimeParam || is_live || video_data.length_seconds <= 0) return;
         positionRestored = true;
         if (rememberedTime >= video_data.length_seconds - 20)
             player.currentTime = 0;

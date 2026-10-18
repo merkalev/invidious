@@ -166,13 +166,41 @@ module Invidious::Routes::API::Manifest
 
   # /api/manifest/hls_playlist/*
   def self.get_hls_playlist(env)
-    response = YT_POOL.client &.get(env.request.path)
+    host = env.params.query["host"]? || "manifest.googlevideo.com"
+    if !host.matches?(/[\w.-]+\.(?:googlevideo|c\.youtube|youtube)\.com/)
+      host = "manifest.googlevideo.com"
+    end
+
+    request_uri = URI.parse(env.request.resource)
+    target_params = HTTP::Params.parse(request_uri.query || "")
+    local = target_params["local"]?.try &.== "true" || env.params.query["local"]?.try &.== "true"
+    target_params.delete("local")
+    target_params.delete("host")
+
+    target_resource = request_uri.path
+    if !target_params.to_s.empty?
+      target_resource += "?#{target_params}"
+    end
+
+    response = HTTP::Client::Response.new(500)
+    begin
+      client = make_client(URI.parse("https://#{host}"), force_resolve: true)
+      begin
+        headers = HTTP::Headers.new
+        headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+        headers["Accept"] = "*/*"
+
+        response = client.get(target_resource, headers)
+      ensure
+        client.close
+      end
+    rescue
+      haltf env, status_code: 502
+    end
 
     if response.status_code != 200
       haltf env, status_code: response.status_code
     end
-
-    local = env.params.query["local"]?.try &.== "true"
 
     env.response.content_type = "application/x-mpegURL"
     env.response.headers.add("Access-Control-Allow-Origin", "*")
@@ -180,40 +208,53 @@ module Invidious::Routes::API::Manifest
     manifest = response.body
 
     if local
-      manifest = manifest.gsub(/https:\/\/[^\n"]*/m) do |match|
-        uri = URI.parse(match)
-        path = uri.path
-
-        path = path.lchop("/videoplayback/")
-        path = path.rchop("/")
-
-        path = path.gsub(/mime\/\w+\/\w+/) do |mimetype|
-          mimetype = mimetype.split("/")
-          mimetype[0] + "/" + mimetype[1] + "%2F" + mimetype[2]
+      manifest = manifest.gsub(%r{https://[^\s\r\n"]+}m) do |match|
+        if !match.includes?("/videoplayback")
+          next match
         end
 
-        path = path.split("/")
+        begin
+          uri = URI.parse(match)
+          raw_params = {} of String => Array(String)
 
-        raw_params = {} of String => Array(String)
-        path.each_slice(2) do |pair|
-          key, value = pair
-          value = URI.decode_www_form(value)
+          path = uri.path.lchop("/videoplayback/").lchop("/videoplayback").rchop("/")
+          if !path.empty?
+            path = path.gsub(/mime\/\w+\/\w+/) do |mimetype|
+              m = mimetype.split("/")
+              m[0] + "/" + m[1] + "%2F" + m[2]
+            end
 
-          if raw_params[key]?
-            raw_params[key] << value
-          else
-            raw_params[key] = [value]
+            path.split("/").each_slice(2) do |pair|
+              next unless pair.size == 2
+              key, value = pair
+              value = URI.decode_www_form(value)
+              raw_params[key] = [value]
+            end
           end
+
+          if query = uri.query
+            HTTP::Params.parse(query).each do |key, value|
+              raw_params[key] = [value]
+            end
+          end
+
+          if chunk_host = raw_params["hls_chunk_host"]?.try(&.first?)
+            if fvip = chunk_host.match(/r(?<fvip>\d+)---/)
+              raw_params["fvip"] = [fvip["fvip"]]
+            end
+          end
+
+          if host_name = uri.host
+            raw_params["host"] = [host_name]
+          end
+
+          raw_params["local"] = ["true"]
+
+          params_obj = HTTP::Params.new(raw_params)
+          "#{HOST_URL}/videoplayback?#{params_obj}"
+        rescue
+          match
         end
-
-        raw_params = HTTP::Params.new(raw_params)
-        if fvip = raw_params["hls_chunk_host"].match(/r(?<fvip>\d+)---/)
-          raw_params["fvip"] = fvip["fvip"]
-        end
-
-        raw_params["host"] = uri.host.not_nil!
-
-        "#{HOST_URL}/videoplayback?#{raw_params}"
       end
     end
 
@@ -222,13 +263,41 @@ module Invidious::Routes::API::Manifest
 
   # /api/manifest/hls_variant/*
   def self.get_hls_variant(env)
-    response = YT_POOL.client &.get(env.request.path)
+    host = env.params.query["host"]? || "manifest.googlevideo.com"
+    if !host.matches?(/[\w.-]+\.(?:googlevideo|c\.youtube|youtube)\.com/)
+      host = "manifest.googlevideo.com"
+    end
+
+    request_uri = URI.parse(env.request.resource)
+    target_params = HTTP::Params.parse(request_uri.query || "")
+    local = target_params["local"]?.try &.== "true" || env.params.query["local"]?.try &.== "true"
+    target_params.delete("local")
+    target_params.delete("host")
+
+    target_resource = request_uri.path
+    if !target_params.to_s.empty?
+      target_resource += "?#{target_params}"
+    end
+
+    response = HTTP::Client::Response.new(500)
+    begin
+      client = make_client(URI.parse("https://#{host}"), force_resolve: true)
+      begin
+        headers = HTTP::Headers.new
+        headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+        headers["Accept"] = "*/*"
+
+        response = client.get(target_resource, headers)
+      ensure
+        client.close
+      end
+    rescue
+      haltf env, status_code: 502
+    end
 
     if response.status_code != 200
       haltf env, status_code: response.status_code
     end
-
-    local = env.params.query["local"]?.try &.== "true"
 
     env.response.content_type = "application/x-mpegURL"
     env.response.headers.add("Access-Control-Allow-Origin", "*")
@@ -236,8 +305,13 @@ module Invidious::Routes::API::Manifest
     manifest = response.body
 
     if local
-      manifest = manifest.gsub("https://www.youtube.com", HOST_URL)
-      manifest = manifest.gsub("index.m3u8", "index.m3u8?local=true")
+      manifest = manifest.gsub(%r{(https://[\w.-]+\.(?:googlevideo|youtube)\.com)?(/api/manifest/hls_playlist/[^\s\r\n]+)}) do
+        origin = $1?
+        target = $2
+        playlist_host = (!origin.nil? && !origin.empty?) ? (URI.parse(origin).host || host) : host
+        sep = target.includes?('?') ? '&' : '?'
+        "#{HOST_URL}#{target}#{sep}local=true&host=#{URI.encode_www_form(playlist_host)}"
+      end
     end
 
     manifest

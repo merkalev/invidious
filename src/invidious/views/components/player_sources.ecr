@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="/css/player.css?v=<%= ASSET_COMMIT %>">
 
 <script type="module" src="/videojs/html/video.js?v=<%= ASSET_COMMIT %>"></script>
-<% if (video.hls_manifest_url) && video.live_now && !CONFIG.disabled?("livestreams") %>
+<% if (video.hls_manifest_url) && (video.live_now || !video.hls_manifest_url.to_s.empty?) && !CONFIG.disabled?("livestreams") %>
     <script type="module" src="/videojs/html/media/hlsjs-video.js?v=<%= ASSET_COMMIT %>"></script>
 <% elsif !params.listen && !CONFIG.disabled?("dash") && (params.quality == "dash" || invidious_companion || (!audio_streams.empty? && !video_streams.empty?)) %>
     <script type="module" src="/videojs/html/media/dash-video.js?v=<%= ASSET_COMMIT %>"></script>

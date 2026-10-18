@@ -4,13 +4,14 @@
     # Player mode: live HLS, DASH (adaptive quality menu), or plain <video>
     # (progressive formats / audio-only "listen" mode).
     is_live = false
-    if (hls_url = video.hls_manifest_url) && video.live_now && !CONFIG.disabled?("livestreams")
+    if (hls_url = video.hls_manifest_url) && (video.live_now || !hls_url.empty?) && !CONFIG.disabled?("livestreams")
         is_live = true
-        hls_url = URI.parse(hls_url).request_target
-        hls_url += "?local=true" if params.local || invidious_companion
-        if invidious_companion
-            sep = hls_url.includes?('?') ? '&' : '?'
-            hls_url = invidious_companion.public_url.to_s + hls_url + "#{sep}check=#{invidious_companion_check_id}"
+        if params.local
+            hls_uri = URI.parse(hls_url)
+            hls_target = hls_uri.request_target
+            sep = hls_target.includes?('?') ? '&' : '?'
+            host_param = hls_uri.host ? "&host=#{URI.encode_www_form(hls_uri.host.not_nil!)}" : ""
+            hls_url = "#{hls_target}#{sep}local=true#{host_param}"
         end
     end
 

@@ -168,7 +168,7 @@ module Invidious::Routes::Embed
     video_streams = video.video_streams
     audio_streams = video.audio_streams
 
-    if audio_streams.empty? && !video.live_now && CONFIG.invidious_companion.empty?
+    if audio_streams.empty? && !video.live_now && video.hls_manifest_url.nil? && CONFIG.invidious_companion.empty?
       if params.quality == "dash"
         env.params.query.delete_all("quality")
         return env.redirect "/embed/#{id}?#{env.params.query}"

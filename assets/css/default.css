@@ -724,8 +724,9 @@ p.video-data { margin: 0; font-weight: 400; font-size: 80%; color: var(--text-se
  */
 
 .comments {
-    max-width: 840px;
-    margin: auto;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
     padding-top: 8px;
 }
 
@@ -2702,7 +2703,11 @@ h1, h2, h3, h4, h5, p,
  * YouTube-Style Comments Section
  */
 #comments {
+    width: 100%;
+    max-width: 100%;
     margin-top: 24px;
+    margin-left: 0;
+    margin-right: 0;
     padding-bottom: 32px;
 }
 
