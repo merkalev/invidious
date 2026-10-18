@@ -94,45 +94,47 @@ def decode_time(string)
 end
 
 def decode_date(string : String)
+  cleaned = string.sub(/^(?:Streamed|Premiered|Updated)\s+/i, "").strip
+
   # String matches 'YYYY'
-  if string.match(/^\d{4}/)
-    return Time.utc(string.to_i, 1, 1)
+  if cleaned.match(/^\d{4}/)
+    return Time.utc(cleaned[0, 4].to_i, 1, 1)
   end
 
   # Try to parse as format Jul 10, 2000
   begin
-    return Time.parse(string, "%b %-d, %Y", Time::Location.local)
+    return Time.parse(cleaned, "%b %-d, %Y", Time::Location.local)
   rescue
   end
 
-  case string
-  when "today"
+  case cleaned.downcase
+  when "today", "just now"
     return Time.utc
   when "yesterday"
     return Time.utc - 1.day
   end
 
-  # String matches format "20 hours ago", "4 months ago", "20s ago", "15min ago"...
-  match = string.match(/(?<count>\d+) ?(?<span>[smhdwy]\w*) ago/)
+  # String matches format "20 hours ago", "4 months ago", "20s ago", "15min ago", "5m ago"...
+  match = cleaned.match(/(?<count>\d+)\s*(?<span>[smhdwy]\w*)\s+ago/i)
 
   raise "Could not parse #{string}" if match.nil?
 
   delta = match["count"].to_i
 
-  case match["span"]
+  case match["span"].downcase
   when .starts_with? "s" # second(s)
     delta = delta.seconds
-  when .starts_with? "mi" # minute(s)
+  when .starts_with? "mo" # month(s)
+    delta = delta.months
+  when .starts_with? "m" # minute(s), min, m
     delta = delta.minutes
-  when .starts_with? "h" # hour(s)
+  when .starts_with? "h" # hour(s), hr, h
     delta = delta.hours
   when .starts_with? "d" # day(s)
     delta = delta.days
-  when .starts_with? "w" # week(s)
+  when .starts_with? "w" # week(s), wk, w
     delta = delta.weeks
-  when .starts_with? "mo" # month(s)
-    delta = delta.months
-  when .starts_with? "y" # year(s)
+  when .starts_with? "y" # year(s), yr, y
     delta = delta.years
   else
     raise "Could not parse #{string}"
@@ -166,7 +168,8 @@ def number_with_separator(number)
 end
 
 def short_text_to_number(short_text : String) : Int64
-  matches = /(?<number>\d+(\.\d+)?)\s?(?<suffix>[mMkKbB]?)/.match(short_text)
+  cleaned = short_text.gsub(/,(?=\d{3}\b)/, "")
+  matches = /(?<number>\d+(\.\d+)?)\s?(?<suffix>[mMkKbB]?)/.match(cleaned)
   number = matches.try &.["number"].to_f || 0.0
 
   case matches.try &.["suffix"].downcase

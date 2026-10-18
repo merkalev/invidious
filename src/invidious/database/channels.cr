@@ -148,8 +148,14 @@ module Invidious::Database::ChannelVideos
     request = <<-SQL
       SELECT DISTINCT ON (ucid) *
       FROM channel_videos
-      WHERE ucid IN (SELECT channel FROM (SELECT UNNEST(subscriptions) AS channel FROM users) AS d
-      GROUP BY channel ORDER BY COUNT(channel) DESC LIMIT 40)
+      WHERE ucid IN (
+        SELECT channel FROM (
+          SELECT UNNEST(subscriptions) AS channel FROM users
+          UNION ALL
+          SELECT DISTINCT ucid AS channel FROM channel_videos
+        ) AS d
+        GROUP BY channel ORDER BY COUNT(channel) DESC LIMIT 40
+      )
       ORDER BY ucid, published DESC
       SQL
 

@@ -25,7 +25,8 @@ module Invidious::Routes::API::V1::Feeds
   end
 
   def self.popular(env)
-    locale = env.get("preferences").as(Preferences).locale
+    preferences = env.get("preferences").as(Preferences)
+    locale = preferences.locale
 
     env.response.content_type = "application/json"
 
@@ -34,11 +35,34 @@ module Invidious::Routes::API::V1::Feeds
       haltf env, 403, error_message
     end
 
-    JSON.build do |json|
-      json.array do
-        popular_videos.each do |video|
-          video.to_json(locale, json)
+    list = popular_videos
+    if list.empty?
+      begin
+        list = Invidious::Database::ChannelVideos.select_popular_videos.sort_by!(&.published).reverse!
+      rescue
+      end
+    end
+
+    if !list.empty?
+      JSON.build do |json|
+        json.array do
+          list.each do |video|
+            video.to_json(locale, json)
+          end
         end
+      end
+    else
+      begin
+        trending, _ = fetch_trending("Gaming", preferences.region, locale)
+        JSON.build do |json|
+          json.array do
+            trending.each do |video|
+              video.to_json(locale, json)
+            end
+          end
+        end
+      rescue ex
+        "[]"
       end
     end
   end

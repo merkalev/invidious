@@ -173,7 +173,7 @@ module Helpers
     return JSON.parse(body.match(/(window\["ytInitialData"\]|var\s*ytInitialData)\s*=\s*(?<info>{.*?});<\/script>/mx).try &.["info"] || "{}").as_h
   end
 
-  def proxy_file(response, env)
+  def proxy_file(response, env) : Nil
     if response.headers.includes_word?("Content-Encoding", "gzip")
       Compress::Gzip::Writer.open(env.response) do |deflate|
         IO.copy response.body_io, deflate
@@ -185,6 +185,7 @@ module Helpers
     else
       IO.copy response.body_io, env.response
     end
+    nil
   end
 
   # Fetch the playback requests tracker from the statistics endpoint.

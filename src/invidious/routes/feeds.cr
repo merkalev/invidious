@@ -32,9 +32,31 @@ module Invidious::Routes::Feeds
   end
 
   def self.popular(env)
-    locale = env.get("preferences").as(Preferences).locale
+    preferences = env.get("preferences").as(Preferences)
+    locale = preferences.locale
 
     if CONFIG.popular_enabled
+      items = [] of (SearchItem | ChannelVideo)
+      if !popular_videos.empty?
+        popular_videos.each { |v| items << v }
+      else
+        begin
+          db_popular = Invidious::Database::ChannelVideos.select_popular_videos.sort_by!(&.published).reverse!
+          db_popular.each { |v| items << v }
+        rescue
+        end
+      end
+
+      if items.empty?
+        begin
+          gaming_items, _ = fetch_trending("Gaming", preferences.region, locale)
+          live_items, _ = fetch_trending("Livestreams", preferences.region, locale)
+          combined = (gaming_items + live_items).uniq(&.id)
+          combined.each { |v| items << v }
+        rescue
+        end
+      end
+
       templated "feeds/popular"
     else
       message = I18n.translate(locale, "The Popular feed has been disabled by the administrator.")

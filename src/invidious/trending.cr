@@ -32,14 +32,23 @@ def fetch_trending(trending_type, region, locale)
 
   items.each do |itm|
     if itm.is_a?(Category)
-      # Ignore the smaller categories, as they generally contain a sponsored
-      # channel, which brings a lot of noise on the trending page.
-      # See: https://github.com/iv-org/invidious/issues/2989
-      next if (itm.contents.size < 24 && deduplicate)
+      # Ignore very small categories (1-2 items), as they generally contain a sponsored
+      # channel, which brings noise on the trending page.
+      next if (itm.contents.size < 3 && deduplicate)
 
       extracted.concat itm.contents.select(SearchItem)
     else
       extracted << itm
+    end
+  end
+
+  if extracted.empty?
+    items.each do |itm|
+      if itm.is_a?(Category)
+        extracted.concat itm.contents.select(SearchItem)
+      else
+        extracted << itm
+      end
     end
   end
 

@@ -2623,3 +2623,78 @@ h1, h2, h3, h4, h5, p,
     padding: 12px 14px;
     font-size: 14px;
 }
+
+/*
+ * Preferences Sticky Header, Saved Banner & Quick-Jump Nav
+ */
+.md-preferences-sticky-header {
+    position: sticky;
+    top: 64px;
+    z-index: 20;
+    padding: 14px 20px;
+    margin-bottom: 14px;
+    background-color: color-mix(in srgb, var(--surface-container) 88%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-1);
+}
+
+.md-page-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.md-prefs-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.md-settings-card {
+    scroll-margin-top: 140px;
+}
+
+.md-alert-success {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 18px;
+    margin-bottom: 16px;
+    border-radius: var(--radius-card);
+    background-color: var(--secondary-container);
+    color: var(--on-secondary-container);
+    border: 1px solid var(--outline-variant);
+    font-weight: 500;
+}
+
+.md-alert-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.md-alert-content i.icon {
+    font-size: 18px;
+}
+
+.md-btn-sm {
+    padding: 6px 14px !important;
+    font-size: 13px !important;
+}
+
+.md-feed-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 4px 16px 16px 16px;
+}
+

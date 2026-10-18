@@ -92,14 +92,25 @@ private module Parsers
       # Instead, in its place is the amount of people currently watching. This behavior should be replicated
       # on Invidious once all features of livestreams are supported. On an unrelated note, defaulting to the current
       # time for publishing isn't a good idea.
-      published = item_contents.dig?("publishedTimeText", "simpleText").try { |t| decode_date(t.as_s) } || Time.local
+      published = (extract_text(item_contents["publishedTimeText"]?)).try { |t|
+        begin
+          decode_date(t)
+        rescue
+          nil
+        end
+      } || Time.local
 
       # Typically views are stored under a "simpleText" in the "viewCountText". However, for
       # livestreams and premiered it is stored under a "runs" array: [{"text":123}, {"text": "watching"}]
       # When view count is disabled the "viewCountText" is not present on InnerTube data.
-      # TODO change default value to nil and typical encoding type to tuple storing type (watchers, views, etc)
-      # and count
-      view_count = item_contents.dig?("viewCountText", "simpleText").try &.as_s.gsub(/\D+/, "").to_i64? || 0_i64
+      view_count_raw = extract_text(item_contents["viewCountText"]?) ||
+                       extract_text(item_contents["shortViewCountText"]?) ||
+                       HelperExtractors.get_short_view_count(item_contents)
+      view_count = if view_count_raw.matches?(/[kKmMbB]/)
+                     short_text_to_number(view_count_raw)
+                   else
+                     view_count_raw.gsub(/\D+/, "").to_i64? || short_text_to_number(view_count_raw)
+                   end
       description_html = item_contents["descriptionSnippet"]?.try { |t| parse_content(t, video_id) } || ""
 
       # The length information generally exist in "lengthText". However, the info can sometimes
@@ -664,25 +675,59 @@ private module Parsers
 
         metadata = item_contents.dig("metadata", "lockupMetadataViewModel")
         title = metadata.dig("title", "content").as_s
-        # Contains the views of the video and the published time of the video.
-        metadata_parts = metadata.dig("metadata", "contentMetadataViewModel", "metadataRows", 0, "metadataParts").try &.as_a
+        # Contains the views of the video, channel author (on Trending), and the published time of the video.
+        metadata_rows = metadata.dig?("metadata", "contentMetadataViewModel", "metadataRows").try(&.as_a) || [] of JSON::Any
+        metadata_parts = metadata_rows.flat_map { |row| row["metadataParts"]?.try(&.as_a) || [] of JSON::Any }
 
-        view_count_text = metadata_parts.try &.find { |item| item["icon"]?.nil? && item.dig?("text", "content").try &.as_s.includes?("views") }
-          .try &.dig("text", "content").as_s
-        published = metadata_parts.try &.find { |item| item["icon"]?.nil? && item.dig?("text", "content").try &.as_s.includes?("ago") }
-          .try { |item| decode_date(item.dig("text", "content").as_s) } || Time.local
+        view_part = metadata_parts.find do |item|
+          next false unless item["icon"]?.nil?
+          content_str = item.dig?("text", "content").try(&.as_s) || ""
+          a11y_str = item["accessibilityLabel"]?.try(&.as_s) || ""
+          content_str.includes?("view") || content_str.includes?("watching") ||
+            a11y_str.includes?("view") || a11y_str.includes?("watching") ||
+            (!content_str.includes?("ago") && content_str.matches?(/\A\d+(?:[.,]\d+)?\s*[kKmMbB]?\z/))
+        end
+        view_count_text = view_part.try &.dig?("text", "content").try(&.as_s)
+
+        published_part = metadata_parts.find do |item|
+          item["icon"]?.nil? && item.dig?("text", "content").try(&.as_s.includes?("ago"))
+        end
+        published = published_part.try do |item|
+          begin
+            decode_date(item.dig("text", "content").as_s)
+          rescue
+            nil
+          end
+        end || Time.local
 
         view_count = short_text_to_number(view_count_text || "0")
 
-        length = thumbnail_view_model.dig("overlays", 0, "thumbnailBottomOverlayViewModel", "badges", 0, "thumbnailBadgeViewModel", "text").try &.as_s
+        author_name = author_fallback.name
+        author_id = author_fallback.id
+        if author_name.empty? && metadata_rows.size > 1
+          first_row_text = metadata_rows[0].dig?("metadataParts", 0, "text", "content").try(&.as_s)
+          if first_row_text && !first_row_text.includes?("view") && !first_row_text.includes?("watching") && !first_row_text.includes?("ago")
+            author_name = first_row_text
+          end
+        end
+        if author_id.empty?
+          author_id = metadata.dig?("image", "decoratedAvatarViewModel", "rendererContext", "commandContext", "onTap", "innertubeCommand", "browseEndpoint", "browseId").try(&.as_s) ||
+                      metadata_rows.dig?(0, "metadataParts", 0, "text", "commandRuns", 0, "onTap", "innertubeCommand", "browseEndpoint", "browseId").try(&.as_s) || ""
+        end
 
-        length_seconds = decode_length_seconds(length) if length
+        length = thumbnail_view_model.dig?("overlays", 0, "thumbnailBottomOverlayViewModel", "badges", 0, "thumbnailBadgeViewModel", "text").try &.as_s
+
+        length_seconds = if length && length.matches?(/\d+:\d+/)
+                           decode_length_seconds(length)
+                         else
+                           0
+                         end
 
         return SearchVideo.new({
           title:              title,
           id:                 video_id,
-          author:             author_fallback.name,
-          ucid:               author_fallback.id,
+          author:             author_name,
+          ucid:               author_id,
           published:          published,
           views:              view_count,
           description_html:   "",
@@ -972,7 +1017,13 @@ private module Extractors
       if section_list_contents = content.dig?("sectionListRenderer", "contents")
         raw_items = unpack_section_list(section_list_contents)
       elsif rich_grid_contents = content.dig?("richGridRenderer", "contents")
-        raw_items = rich_grid_contents.as_a
+        rich_grid_contents.as_a.each do |entry|
+          if shelf_items = entry.dig?("richSectionRenderer", "content", "richShelfRenderer", "contents").try(&.as_a)
+            raw_items.concat(shelf_items)
+          else
+            raw_items << entry
+          end
+        end
       end
 
       return raw_items

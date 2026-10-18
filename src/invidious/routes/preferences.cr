@@ -239,7 +239,7 @@ module Invidious::Routes::PreferencesRoute
       end
     end
 
-    env.redirect referer
+    env.redirect "/preferences?saved=1&referer=#{URI.encode_www_form(referer)}"
   end
 
   def self.toggle_theme(env)

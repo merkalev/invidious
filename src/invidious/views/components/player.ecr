@@ -7,7 +7,7 @@
     if (hls_url = video.hls_manifest_url) && video.live_now && !CONFIG.disabled?("livestreams")
         is_live = true
         hls_url = URI.parse(hls_url).request_target
-        hls_url += "?local=true" if params.local
+        hls_url += "?local=true" if params.local || invidious_companion
         if invidious_companion
             sep = hls_url.includes?('?') ? '&' : '?'
             hls_url = invidious_companion.public_url.to_s + hls_url + "#{sep}check=#{invidious_companion_check_id}"
@@ -16,18 +16,46 @@
 
     # Streaming engines play extensionless proxy URLs, so the media type is
     # delivered through the `source` property in assets/js/player.js instead.
+    # Enable DASH whenever available (unless audio-only listen mode or disabled)
+    # so Video.js 10's quality selector (<media-quality-radio-group>) has all
+    # resolutions (144p..2160p/4320p + Auto), mapping legacy quality presets
+    # (hd720/medium/small) to initial DASH target resolutions.
     dash_url : String? = nil
-    if !is_live && !params.listen && params.quality == "dash" && !CONFIG.disabled?("dash")
+    effective_quality_dash = params.quality_dash
+    if !is_live && !params.listen && !CONFIG.disabled?("dash") && (params.quality == "dash" || (!audio_streams.empty? && !video_streams.empty?))
         dash_url = "/api/manifest/dash/id/#{video.id}?local=true&unique_res=1"
         dash_url = invidious_companion.public_url.to_s + dash_url +
                     "&check=#{invidious_companion_check_id}" if invidious_companion
+        if params.quality != "dash"
+            effective_quality_dash = case params.quality
+                                     when "hd720"  then "720p"
+                                     when "medium" then "360p"
+                                     when "small"  then "240p"
+                                     else               params.quality_dash
+                                     end
+        end
+    end
+
+    # Build progressive fallback sources in case DASH fails or is disabled
+    fmt_stream.reject! { |f| f["itag"] == 17 }
+    fmt_stream.sort_by! { |f| params.quality == f["quality"] ? 0 : 1 }
+    fallback_sources = fmt_stream.map do |fmt|
+        f_url = "/latest_version?id=#{video.id}&itag=#{fmt["itag"]}"
+        f_url += "&local=true" if params.local || invidious_companion
+        f_url = invidious_companion.public_url.to_s + f_url +
+                "&check=#{invidious_companion_check_id}" if invidious_companion
+        {
+            "src"   => f_url,
+            "type"  => fmt["mimeType"].as_s,
+            "label" => fmt["quality"]?.try(&.as_s) || fmt["qualityLabel"]?.try(&.as_s) || "360p",
+        }
     end
 
     # Hover thumbnails come from a storyboard served as WebVTT. Live streams
     # don't have storyboards.
     storyboard_url = video.live_now ? nil : "/api/v1/storyboards/#{video.id}?height=90"
 
-    preload = params.preload ? "auto" : "none"
+    preload = params.preload ? "auto" : "metadata"
 
     common_media_attrs = [
         "id=\"player\"",
@@ -79,20 +107,16 @@
                     %>
                     <% audio_streams.each_with_index do |fmt, i| %>
                         <% src_url  = "/latest_version?id=#{video.id}&itag=#{fmt["itag"]}"
-                           src_url += "&local=true" if params.local
+                           src_url += "&local=true" if params.local || invidious_companion
                            src_url = invidious_companion.public_url.to_s + src_url +
                                        "&check=#{invidious_companion_check_id}" if (invidious_companion)
                         %>
                         <source src="<%= src_url %>" type="<%= HTML.escape(fmt["mimeType"].as_s) %>" label="<%= fmt["bitrate"] %>k" <% if i == best_m4a_stream_index %>selected<% end %>>
                     <% end %>
                 <% else %>
-                    <%
-                    fmt_stream.reject! { |f| f["itag"] == 17 }
-                    fmt_stream.sort_by! {|f| params.quality == f["quality"] ? 0 : 1 }
-                    %>
                     <% fmt_stream.each_with_index do |fmt, i| %>
                         <% src_url  = "/latest_version?id=#{video.id}&itag=#{fmt["itag"]}"
-                           src_url += "&local=true" if params.local
+                           src_url += "&local=true" if params.local || invidious_companion
                            src_url = invidious_companion.public_url.to_s + src_url +
                                        "&check=#{invidious_companion_check_id}" if (invidious_companion)
                         %>
@@ -116,6 +140,8 @@
         "thumbnail"               => thumbnail,
         "preferred_caption_found" => !preferred_captions.empty?,
         "captions"                => caption_list,
+        "effective_quality_dash"  => effective_quality_dash,
+        "fallback_sources"        => fallback_sources,
     }
     if hls_url
         player_data_json["hls_url"] = hls_url

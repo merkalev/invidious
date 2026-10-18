@@ -4,18 +4,63 @@
 
 <div class="md-page-container">
     <form class="pure-form pure-form-aligned md-preferences-form" action="/preferences?referer=<%= URI.encode_www_form(referer) %>" method="post">
-        <div class="md-page-header">
+        <% if env.params.query["saved"]? == "1" %>
+            <div class="md-alert md-alert-success" id="preferences-saved-banner" role="status">
+                <div class="md-alert-content">
+                    <i class="icon ion-md-checkmark-circle"></i>
+                    <span><%= I18n.translate(locale, "Preferences saved") %></span>
+                </div>
+                <div class="md-alert-actions">
+                    <% if !referer.empty? && referer != "/" && !referer.starts_with?("/preferences") %>
+                        <a href="<%= HTML.escape(referer) %>" class="pure-button pure-button-secondary md-btn-sm">
+                            <i class="icon ion-ios-arrow-back"></i>&nbsp;<%= I18n.translate(locale, "Go back") %>
+                        </a>
+                    <% end %>
+                </div>
+            </div>
+            <script>
+                if (window.history && window.history.replaceState) {
+                    var cleanUrl = new URL(window.location.href);
+                    cleanUrl.searchParams.delete('saved');
+                    window.history.replaceState({}, document.title, cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+                }
+            </script>
+        <% end %>
+
+        <div class="md-page-header md-preferences-sticky-header">
             <div class="md-page-header-title">
                 <i class="icon ion-ios-cog"></i>
                 <h1><%= I18n.translate(locale, "Preferences") %></h1>
             </div>
-            <button type="submit" class="pure-button pure-button-primary">
-                <i class="icon ion-md-checkmark"></i>&nbsp;<%= I18n.translate(locale, "Save preferences") %>
-            </button>
+            <div class="md-page-header-actions">
+                <% if !referer.empty? && referer != "/" && !referer.starts_with?("/preferences") %>
+                    <a href="<%= HTML.escape(referer) %>" class="pure-button pure-button-secondary">
+                        <i class="icon ion-ios-arrow-back"></i>&nbsp;<%= I18n.translate(locale, "Go back") %>
+                    </a>
+                <% end %>
+                <button type="submit" class="pure-button pure-button-primary">
+                    <i class="icon ion-md-checkmark"></i>&nbsp;<%= I18n.translate(locale, "Save preferences") %>
+                </button>
+            </div>
         </div>
 
+        <nav class="md-prefs-nav" aria-label="Preferences sections">
+            <a class="channel-sort-chip" href="#prefs-player"><i class="icon ion-ios-play-circle"></i>&nbsp;<%= I18n.translate(locale, "preferences_category_player") %></a>
+            <a class="channel-sort-chip" href="#prefs-visual"><i class="icon ion-ios-color-palette"></i>&nbsp;<%= I18n.translate(locale, "preferences_category_visual") %></a>
+            <a class="channel-sort-chip" href="#prefs-misc"><i class="icon ion-ios-options"></i>&nbsp;<%= I18n.translate(locale, "preferences_category_misc") %></a>
+            <% if env.get? "user" %>
+                <a class="channel-sort-chip" href="#prefs-subscription"><i class="icon ion-ios-notifications"></i>&nbsp;<%= I18n.translate(locale, "preferences_category_subscription") %></a>
+            <% end %>
+            <% if env.get?("user") && CONFIG.admins.includes? env.get?("user").as(Invidious::User).email %>
+                <a class="channel-sort-chip" href="#prefs-admin"><i class="icon ion-ios-construct"></i>&nbsp;<%= I18n.translate(locale, "preferences_category_admin") %></a>
+            <% end %>
+            <% if env.get? "user" %>
+                <a class="channel-sort-chip" href="#prefs-data"><i class="icon ion-ios-folder-open"></i>&nbsp;<%= I18n.translate(locale, "preferences_category_data") %></a>
+            <% end %>
+        </nav>
+
         <fieldset>
-            <div class="md-settings-card">
+            <div class="md-settings-card" id="prefs-player">
                 <legend><i class="icon ion-ios-play-circle"></i> <%= I18n.translate(locale, "preferences_category_player") %></legend>
 
                 <div class="pure-control-group">
@@ -157,7 +202,7 @@
                 <% end %>
             </div>
 
-            <div class="md-settings-card">
+            <div class="md-settings-card" id="prefs-visual">
                 <legend><i class="icon ion-ios-color-palette"></i> <%= I18n.translate(locale, "preferences_category_visual") %></legend>
 
                 <div class="pure-control-group">
@@ -236,7 +281,7 @@
                 <% end %>
             </div>
 
-            <div class="md-settings-card">
+            <div class="md-settings-card" id="prefs-misc">
                 <legend><i class="icon ion-ios-options"></i> <%= I18n.translate(locale, "preferences_category_misc") %></legend>
 
                 <div class="pure-control-group">
@@ -254,7 +299,7 @@
             </div>
 
             <% if env.get? "user" %>
-                <div class="md-settings-card">
+                <div class="md-settings-card" id="prefs-subscription">
                     <legend><i class="icon ion-ios-notifications"></i> <%= I18n.translate(locale, "preferences_category_subscription") %></legend>
 
                     <div class="pure-control-group">
@@ -314,7 +359,7 @@
             <% end %>
 
             <% if env.get?("user") && CONFIG.admins.includes? env.get?("user").as(Invidious::User).email %>
-                <div class="md-settings-card">
+                <div class="md-settings-card" id="prefs-admin">
                     <legend><i class="icon ion-ios-construct"></i> <%= I18n.translate(locale, "preferences_category_admin") %></legend>
 
                     <div class="pure-control-group">
@@ -372,7 +417,7 @@
             <% end %>
 
             <% if env.get? "user" %>
-                <div class="md-settings-card">
+                <div class="md-settings-card" id="prefs-data">
                     <legend><i class="icon ion-ios-folder-open"></i> <%= I18n.translate(locale, "preferences_category_data") %></legend>
 
                     <div class="md-action-grid">

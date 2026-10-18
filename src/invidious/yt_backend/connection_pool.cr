@@ -58,6 +58,7 @@ struct CompanionWrapper
   def initialize(companion : Config::CompanionConfig)
     @companion = companion
     @client = make_client(companion.private_url, use_http_proxy: false)
+    @client.read_timeout = 30.seconds
   end
 
   def close
@@ -78,7 +79,6 @@ struct CompanionConnectionPool
 
     @pool = DB::Pool(CompanionWrapper).new(options) do
       companion = CONFIG.invidious_companion.sample
-      make_client(companion.private_url, use_http_proxy: false)
       CompanionWrapper.new(companion: companion)
     end
   end
@@ -92,7 +92,6 @@ struct CompanionConnectionPool
       wrapper.close
 
       companion = CONFIG.invidious_companion.sample
-      make_client(companion.private_url, use_http_proxy: false)
       wrapper = CompanionWrapper.new(companion: companion)
 
       response = yield wrapper
